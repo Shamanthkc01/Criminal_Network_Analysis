@@ -253,7 +253,6 @@ st.session_state.active_page = navigation
 if st.session_state.active_page == "🏠 Home":
 
     st.title(" AI-Powered Criminal Network Analysis System")
-    st.write("Smart India Hackathon 2026 | Problem Statement 26189")
 
     st.divider()
 
