@@ -170,6 +170,15 @@ if st.sidebar.button(" Logout"):
 if "active_page" not in st.session_state:
     st.session_state.active_page = "🏠 Home"
 
+st.markdown(
+    """
+    <style>
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 st.markdown("""
 <style>
 
