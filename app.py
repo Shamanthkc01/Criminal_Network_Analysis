@@ -735,9 +735,8 @@ if st.session_state.active_page == "📂 Cases":
 
             st.rerun()
 
-    else:
-
-        st.info("📂 No cases available to delete.")
+else:
+    st.info("📂 No cases available to delete.")
 
 # ==================================================
 # 📋 INVESTIGATION ACTIVITY LOG
@@ -1964,9 +1963,8 @@ if st.button(
                 f"🕒 **Time:** {activity_time}"
             )
 
-    else:
-
-        st.info("ℹ️ No investigation activity recorded yet.")
+else:
+st.info("ℹ️ No investigation activity recorded yet.")
 
 
 # ==================================================
