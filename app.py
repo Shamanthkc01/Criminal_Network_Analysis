@@ -169,17 +169,19 @@ if st.sidebar.button(" Logout"):
 
 if "active_page" not in st.session_state:
     st.session_state.active_page = "🏠 Home"
-
+# Inject custom CSS to hide the bottom footer, status indicators, and deployment button
 st.markdown(
     """
     <style>
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
+    .stAppDeployButton {display: none;}
+    [data-testid="stStatusWidget"] {display: none;}
     </style>
     """,
     unsafe_allow_html=True
 )
-st.markdown("""
+'''st.markdown("""
 <style>
 
 /* Hide Streamlit sidebar on mobile */
@@ -245,7 +247,7 @@ st.markdown("""
         margin: 0 !important;
         padding: 0 !important;
     }
-}
+}'''
 
 /* Desktop */
 @media (min-width: 769px) {
