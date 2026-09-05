@@ -249,6 +249,23 @@ st.markdown("""
     }
 
 }
+/* Hide Streamlit branding */
+header[data-testid="stHeader"] {
+    display: none !important;
+}
+
+[data-testid="stToolbar"] {
+    display: none !important;
+}
+
+footer {
+    display: none !important;
+}
+
+/* Hide GitHub links inside the app */
+a[href*="github.com"] {
+    display: none !important;
+}
 
 </style>
 """, unsafe_allow_html=True)
