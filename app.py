@@ -735,8 +735,8 @@ if st.session_state.active_page == "📂 Cases":
 
             st.rerun()
 
-else:
-    st.info("📂 No cases available to delete.")
+    else:
+        st.info("📂 No cases available to delete.")
 
 # ==================================================
 # 📋 INVESTIGATION ACTIVITY LOG
