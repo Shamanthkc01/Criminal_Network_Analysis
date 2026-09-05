@@ -1978,78 +1978,77 @@ if st.session_state.active_page == "🤖 AI":
         if not case_found:
             st.error(f"❌ Case {update_case_id} not found")
 # 📋 Case Status
-st.subheader("📋 Case Status")
+        st.subheader("📋 Case Status")
 
-if update_case_id.strip():
+        if update_case_id.strip():
 
-    selected_status_case = next(
-        (
-            case for case in st.session_state.cases
-            if str(case.get("Case ID", "")) == str(update_case_id)
-        ),
-        None
-    )
+            selected_status_case = next(
+                (
+                    case for case in st.session_state.cases
+                    if str(case.get("Case ID", "")) == str(update_case_id)
+                ),
+                None
+            )
 
-    if selected_status_case:
-        status = selected_status_case.get("status", "Unknown")
+            if selected_status_case:
+                status = selected_status_case.get("status", "Unknown")
 
-        if status == "Under Investigation":
-            st.warning(f"🔍 Status: {status}")
+                if status == "Under Investigation":
+                    st.warning(f"🔍 Status: {status}")
 
-        elif status == "Solved":
-            st.success(f"✅ Status: {status}")
+                elif status == "Solved":
+                    st.success(f"✅ Status: {status}")
 
-        elif status == "Closed":
-            st.info(f"🔒 Status: {status}")
+                elif status == "Closed":
+                    st.info(f"🔒 Status: {status}")
 
-        elif status == "Open":
-            st.write(f"📌 Status: {status}")
+                elif status == "Open":
+                    st.write(f"📌 Status: {status}")
 
+                else:
+                    st.write(f"📌 Status: {status}")
+
+            else:
+                st.info("Enter a valid Case ID to view its status.")
         else:
-            st.write(f"📌 Status: {status}")
-
-    else:
-        st.info("Enter a valid Case ID to view its status.")
-else:
-    st.info("Enter a Case ID above to view its current status.")
+            st.info("Enter a Case ID above to view its current status.")
 # Step 30: Case Management Table
 
-st.subheader("📋 Case Management")
+    st.subheader("📋 Case Management")
 
-if st.session_state.cases:
+    if st.session_state.cases:
+        table_data = []
     
-    table_data = []
-    
-    for case in st.session_state.cases:
+        for case in st.session_state.cases:
         
-        case_id = case["Case ID"]
-        status = case.get("status","Open")
+            case_id = case["Case ID"]
+            status = case.get("status","Open")
         
-        evidence_count = len(
-            st.session_state.evidence.get(case_id, [])
-        )
+            evidence_count = len(
+                st.session_state.evidence.get(case_id, [])
+            )
         
-        ai_count = (
-            1
-            if case_id in st.session_state.ai_results
-            else 0
-        )
+            ai_count = (
+                1
+                if case_id in st.session_state.ai_results
+                else 0
+            )
         
-        table_data.append({
-            "Case ID": case_id,
-            "Case Title": case["Case Title"],
-            "Location": case["Location"],
-            "Status": status,
-            "Evidence": evidence_count,
-            "AI Analysis": ai_count
-        })
+            table_data.append({
+                "Case ID": case_id,
+                "Case Title": case["Case Title"],
+                "Location": case["Location"],
+                "Status": status,
+                "Evidence": evidence_count,
+                "AI Analysis": ai_count
+            })
         
-    st.dataframe(
-        table_data,
-        use_container_width=True
+        st.dataframe(
+            table_data,
+            use_container_width=True
                  )
-else:
-    st.info("No cases registered yet.") 
+    else:
+        st.info("No cases registered yet.") 
 
 
 # Step 31: Logout
