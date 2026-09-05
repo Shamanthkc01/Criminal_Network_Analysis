@@ -1904,74 +1904,7 @@ qualified investigator.
             st.error(
                 f"❌ Case {report_case_id} not found."
             )
-# ==================================================
-# 📋 INVESTIGATION ACTIVITY LOG
-# ==================================================
 
-st.divider()
-st.subheader("📋 Investigation Activity Log")
-
-if "activity_log" not in st.session_state: 
-    st.session_state.activity_log = []
-if st.button(
-    "🗑️ Clear Activity Log",
-    key="clear_activity_log"
-):
-
-    st.session_state.activity_log = []
-
-    st.success("✅ Activity log cleared.")
-
-    st.rerun()
-
-    if st.session_state.activity_log:
-
-        for activity in reversed(st.session_state.activity_log):
-
-        # Handle old activity entries that may be strings
-            if isinstance(activity, dict):
-
-                case_id = activity.get("Case ID", "N/A")
-                message = activity.get("Message", "Unknown activity")
-                activity_time = activity.get("Time", "Unknown time")
-            else:
-                activity_text = str(activity)
-
-                case_id = "N/A"
-                message = activity_text
-                activity_time = "Time not recorded"
-
-            # Extract time and case ID from old activity format
-                if activity_text.startswith("["):
-
-                    try:
-                        activity_time = activity_text.split("]")[0][1:]
-
-                        if "[Case " in activity_text:
-                            case_id = (
-                            activity_text
-                                .split("[Case ")[1]
-                                .split("]")[0]
-                            )
-
-                        message = activity_text.split("] ", 1)[1]
-
-                    except Exception:
-                        pass
-
-            st.info(
-                f"📂 **Case:** {case_id}\n\n"
-                f"📝 **Activity:** {message}\n\n"
-                f"🕒 **Time:** {activity_time}"
-            )
-
-else:
-    st.info("ℹ️ No investigation activity recorded yet.")
-
-
-# ==================================================
-# END INVESTIGATION ACTIVITY LOG
-# ==================================================
 
 # ==================================================
 # END AI PAGE
