@@ -2197,16 +2197,34 @@ if st.session_state.activity_log:
             case_id = activity.get("Case ID", "N/A")
             message = activity.get("Message", "Unknown activity")
             activity_time = activity.get("Time", "Unknown time")
-
         else:
+            activity_text = str(activity)
 
-            case_id = f"{case_id}"
-            message = str(activity)
+            case_id = "N/A"
+            message = activity_text
             activity_time = "Time not recorded"
 
+            # Extract time and case ID from old activity format
+            if activity_text.startswith("["):
+
+                try:
+                    activity_time = activity_text.split("]")[0][1:]
+
+                    if "[Case " in activity_text:
+                        case_id = (
+                            activity_text
+                            .split("[Case ")[1]
+                            .split("]")[0]
+                        )
+
+                    message = activity_text.split("] ", 1)[1]
+
+                except Exception:
+                    pass
+
         st.info(
-            f"📂 **Case:** {case_id}\n"
-            f"📝 **Activity:** {message}\n"
+            f"📂 **Case:** {case_id}\n\n"
+            f"📝 **Activity:** {message}\n\n"
             f"🕒 **Time:** {activity_time}"
         )
 
