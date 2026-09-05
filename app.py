@@ -1964,7 +1964,7 @@ if st.button(
             )
 
 else:
-st.info("ℹ️ No investigation activity recorded yet.")
+    st.info("ℹ️ No investigation activity recorded yet.")
 
 
 # ==================================================
