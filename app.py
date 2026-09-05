@@ -1904,78 +1904,79 @@ qualified investigator.
             st.error(
                 f"❌ Case {report_case_id} not found."
             )
+if st.session_state.active_page == "🤖 AI":
 # Step 28: Live Dashboard Statistics
-st.subheader("📊 Live Investigation Statistics")
-if "cases" not in st.session_state:
-    st.session_state.cases =[]
+    st.subheader("📊 Live Investigation Statistics")
+    if "cases" not in st.session_state:
+        st.session_state.cases =[]
 
-total_cases = len(st.session_state.cases)
-if "evidence" not in st.session_state:
-    st.session_state.evidence = {}
+    total_cases = len(st.session_state.cases)
+    if "evidence" not in st.session_state:
+        st.session_state.evidence = {}
 
-total_evidence = sum(
-    len(files)
-    for files in st.session_state.evidence.values()
-)
-if "ai_results" not in st.session_state:
-    st.session_state.ai_results = {}
-total_ai_results = len(st.session_state.ai_results)
+    total_evidence = sum(
+        len(files)
+        for files in st.session_state.evidence.values()
+    )
+    if "ai_results" not in st.session_state:
+        st.session_state.ai_results = {}
+    total_ai_results = len(st.session_state.ai_results)
 
-col1, col2, col3 = st.columns(3)
+    col1, col2, col3 = st.columns(3)
 
-with col1:
-    st.metric("📂 Total Cases", total_cases)
+    with col1:
+        st.metric("📂 Total Cases", total_cases)
 
-with col2:
-    st.metric("📎 Evidence Files", total_evidence)
+    with col2:
+        st.metric("📎 Evidence Files", total_evidence)
 
-with col3:
-    st.metric("🤖 AI Analyses", total_ai_results)
-# Case Status
-if "case_status" not in st.session_state:
-    st.session_state.case_status ={}
+    with col3:
+        st.metric("🤖 AI Analyses", total_ai_results)
+    # Case Status
+    if "case_status" not in st.session_state:
+        st.session_state.case_status ={}
 
 
-st.subheader("🔄 Update Case Status")
+    st.subheader("🔄 Update Case Status")
 
-update_case_id = st.text_input("Enter Case ID",key="update_case_id")
+    update_case_id = st.text_input("Enter Case ID",key="update_case_id")
 
-new_status = st.selectbox(
-    "Select New Status",
-    ["Open", "Under Investigation", "Solved", "Closed"],
-    key="new_status"
-)
+    new_status = st.selectbox(
+        "Select New Status",
+        ["Open", "Under Investigation", "Solved", "Closed"],
+        key="new_status"
+    )
 
-if st.button("Update Status",key="update_status_button"):
+    if st.button("Update Status",key="update_status_button"):
 
-    case_found = False
+        case_found = False
 
-    for case in st.session_state.cases:
+        for case in st.session_state.cases:
 
-        if str(case.get("Case ID")) == str(update_case_id):
+            if str(case.get("Case ID")) == str(update_case_id):
 
-            case["status"] = new_status
-            log_activity(update_case_id,f"Status changed to {new_status}.")
-            case_found = True
+                case["status"] = new_status
+                log_activity(update_case_id,f"Status changed to {new_status}.")
+                case_found = True
             
 
             # Save updated cases to JSON
-            with open(CASE_FILE, "w", encoding="utf-8") as f:
-                json.dump(
-                    st.session_state.cases,
-                    f,
-                    indent=4,
-                    ensure_ascii=False
+                with open(CASE_FILE, "w", encoding="utf-8") as f:
+                    json.dump(
+                        st.session_state.cases,
+                        f,
+                        indent=4,
+                        ensure_ascii=False
+                    )
+
+                st.success(
+                    f"✅ Case {update_case_id} status updated to {new_status}"
                 )
 
-            st.success(
-                f"✅ Case {update_case_id} status updated to {new_status}"
-            )
+                break
 
-            break
-
-    if not case_found:
-        st.error(f"❌ Case {update_case_id} not found")
+        if not case_found:
+            st.error(f"❌ Case {update_case_id} not found")
 # 📋 Case Status
 st.subheader("📋 Case Status")
 
