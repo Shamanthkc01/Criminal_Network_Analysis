@@ -1904,6 +1904,279 @@ qualified investigator.
             st.error(
                 f"❌ Case {report_case_id} not found."
             )
+# Step 28: Live Dashboard Statistics
+st.subheader("📊 Live Investigation Statistics")
+if "cases" not in st.session_state:
+    st.session_state.cases =[]
+
+total_cases = len(st.session_state.cases)
+if "evidence" not in st.session_state:
+    st.session_state.evidence = {}
+
+total_evidence = sum(
+    len(files)
+    for files in st.session_state.evidence.values()
+)
+if "ai_results" not in st.session_state:
+    st.session_state.ai_results = {}
+total_ai_results = len(st.session_state.ai_results)
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    st.metric("📂 Total Cases", total_cases)
+
+with col2:
+    st.metric("📎 Evidence Files", total_evidence)
+
+with col3:
+    st.metric("🤖 AI Analyses", total_ai_results)
+# Case Status
+if "case_status" not in st.session_state:
+    st.session_state.case_status ={}
+
+
+st.subheader("🔄 Update Case Status")
+
+update_case_id = st.text_input("Enter Case ID",key="update_case_id")
+
+new_status = st.selectbox(
+    "Select New Status",
+    ["Open", "Under Investigation", "Solved", "Closed"],
+    key="new_status"
+)
+
+if st.button("Update Status",key="update_status_button"):
+
+    case_found = False
+
+    for case in st.session_state.cases:
+
+        if str(case.get("Case ID")) == str(update_case_id):
+
+            case["status"] = new_status
+            log_activity(update_case_id,f"Status changed to {new_status}.")
+            case_found = True
+            
+
+            # Save updated cases to JSON
+            with open(CASE_FILE, "w", encoding="utf-8") as f:
+                json.dump(
+                    st.session_state.cases,
+                    f,
+                    indent=4,
+                    ensure_ascii=False
+                )
+
+            st.success(
+                f"✅ Case {update_case_id} status updated to {new_status}"
+            )
+
+            break
+
+    if not case_found:
+        st.error(f"❌ Case {update_case_id} not found")
+# 📋 Case Status
+st.subheader("📋 Case Status")
+
+if update_case_id.strip():
+
+    selected_status_case = next(
+        (
+            case for case in st.session_state.cases
+            if str(case.get("Case ID", "")) == str(update_case_id)
+        ),
+        None
+    )
+
+    if selected_status_case:
+        status = selected_status_case.get("status", "Unknown")
+
+        if status == "Under Investigation":
+            st.warning(f"🔍 Status: {status}")
+
+        elif status == "Solved":
+            st.success(f"✅ Status: {status}")
+
+        elif status == "Closed":
+            st.info(f"🔒 Status: {status}")
+
+        elif status == "Open":
+            st.write(f"📌 Status: {status}")
+
+        else:
+            st.write(f"📌 Status: {status}")
+
+    else:
+        st.info("Enter a valid Case ID to view its status.")
+else:
+    st.info("Enter a Case ID above to view its current status.")
+# Step 30: Case Management Table
+
+st.subheader("📋 Case Management")
+
+if st.session_state.cases:
+    
+    table_data = []
+    
+    for case in st.session_state.cases:
+        
+        case_id = case["Case ID"]
+        status = case.get("status","Open")
+        
+        evidence_count = len(
+            st.session_state.evidence.get(case_id, [])
+        )
+        
+        ai_count = (
+            1
+            if case_id in st.session_state.ai_results
+            else 0
+        )
+        
+        table_data.append({
+            "Case ID": case_id,
+            "Case Title": case["Case Title"],
+            "Location": case["Location"],
+            "Status": status,
+            "Evidence": evidence_count,
+            "AI Analysis": ai_count
+        })
+        
+    st.dataframe(
+        table_data,
+        use_container_width=True
+                 )
+else:
+    st.info("No cases registered yet.") 
+
+
+# Step 31: Logout
+
+if st.session_state.get("logged_in", False):
+
+    st.sidebar.divider()
+    st.sidebar.subheader("🔐 Account")
+
+    if st.sidebar.button("🚪 Logout"):
+
+        st.session_state.logged_in = False
+        st.session_state.role = None
+
+        st.success("✅ You have been logged out.")
+
+        st.rerun()  
+  
+# ==================================================
+# 📋 INVESTIGATION ACTIVITY LOG
+# ==================================================
+
+# Initialize activity log
+if "activity_log" not in st.session_state:
+    st.session_state.activity_log = []
+
+
+# Activity logging function
+def log_activity(case_id, message):
+
+    if "activity_log" not in st.session_state:
+        st.session_state.activity_log = []
+
+    activity = {
+        "Case ID": str(case_id),
+        "Message": str(message),
+        "Time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    }
+
+    st.session_state.activity_log.append(activity)
+
+
+# ==================================================
+# 📋 INVESTIGATION ACTIVITY LOG
+# ==================================================
+
+if "activity_log" not in st.session_state:
+    st.session_state.activity_log = []
+
+
+def log_activity(case_id, message):
+
+    if "activity_log" not in st.session_state:
+        st.session_state.activity_log = []
+
+    activity = {
+        "Case ID": str(case_id),
+        "Message": str(message),
+        "Time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    }
+
+    st.session_state.activity_log.append(activity)
+
+
+st.subheader("📋 Investigation Activity Log")
+
+
+if st.button(
+    "🗑️ Clear Activity Log",
+    key="clear_activity_log"
+):
+
+    st.session_state.activity_log = []
+
+    st.success("✅ Activity log cleared.")
+
+    st.rerun()
+
+
+if st.session_state.activity_log:
+
+    for activity in reversed(st.session_state.activity_log):
+
+        # Handle old activity entries that may be strings
+        if isinstance(activity, dict):
+
+            case_id = activity.get("Case ID", "N/A")
+            message = activity.get("Message", "Unknown activity")
+            activity_time = activity.get("Time", "Unknown time")
+        else:
+            activity_text = str(activity)
+
+            case_id = "N/A"
+            message = activity_text
+            activity_time = "Time not recorded"
+
+            # Extract time and case ID from old activity format
+            if activity_text.startswith("["):
+
+                try:
+                    activity_time = activity_text.split("]")[0][1:]
+
+                    if "[Case " in activity_text:
+                        case_id = (
+                            activity_text
+                            .split("[Case ")[1]
+                            .split("]")[0]
+                        )
+
+                    message = activity_text.split("] ", 1)[1]
+
+                except Exception:
+                    pass
+
+        st.info(
+            f"📂 **Case:** {case_id}\n\n"
+            f"📝 **Activity:** {message}\n\n"
+            f"🕒 **Time:** {activity_time}"
+        )
+
+else:
+
+    st.info("ℹ️ No investigation activity recorded yet.")
+
+
+# ==================================================
+# END INVESTIGATION ACTIVITY LOG
+# ==================================================
 
 
 # ==================================================
