@@ -672,7 +672,7 @@ if st.session_state.active_page == "📂 Cases":
     # --------------------------------------------------
     # DELETE CASE
     # --------------------------------------------------
-
+if st.session_state.active_page == "📂 Cases":
     st.subheader("🗑️ Delete Case")
 
     if case_ids:
