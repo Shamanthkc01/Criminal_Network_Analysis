@@ -745,7 +745,8 @@ else:
 st.divider()
 st.subheader("📋 Investigation Activity Log")
 
-
+if "activity_log" not in st.session_state: 
+    st.session_state.activity_log = []
 if st.button(
     "🗑️ Clear Activity Log",
     key="clear_activity_log"
@@ -1910,7 +1911,8 @@ qualified investigator.
 st.divider()
 st.subheader("📋 Investigation Activity Log")
 
-
+if "activity_log" not in st.session_state: 
+    st.session_state.activity_log = []
 if st.button(
     "🗑️ Clear Activity Log",
     key="clear_activity_log"
