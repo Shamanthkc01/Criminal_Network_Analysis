@@ -248,7 +248,8 @@ st.markdown(
         padding: 0 !important;
     }
 }'''
-
+st.markdown("""
+<style>
 /* Desktop */
 @media (min-width: 769px) {
 
