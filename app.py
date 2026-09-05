@@ -164,51 +164,78 @@ if st.sidebar.button(" Logout"):
 
     st.rerun()
 # ==================================================
-# 📱 MOBILE APP NAVIGATION
+# 📱 INSTAGRAM-STYLE MOBILE BOTTOM NAVIGATION
 # ==================================================
 
 if "active_page" not in st.session_state:
     st.session_state.active_page = "🏠 Home"
 
-# Mobile navigation styling
 st.markdown("""
 <style>
 
+/* Hide Streamlit sidebar on mobile */
 @media (max-width: 768px) {
 
-    /* Hide sidebar on mobile */
     [data-testid="stSidebar"] {
         display: none;
     }
 
-    /* Space for bottom navigation */
+    /* Give content space above bottom navigation */
     [data-testid="stAppViewContainer"] {
-        padding-bottom: 80px;
+        padding-bottom: 90px;
     }
 
     /* Bottom navigation bar */
     div[role="radiogroup"] {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        z-index: 999999;
-        background: white;
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+
+        z-index: 999999 !important;
+
+        background: white !important;
         border-top: 1px solid #dddddd;
-        padding: 8px 2px;
-        display: flex;
-        justify-content: space-around;
-        box-shadow: 0 -2px 10px rgba(0,0,0,0.10);
+
+        padding: 7px 3px 8px 3px !important;
+
+        display: flex !important;
+        justify-content: space-around !important;
+        align-items: center !important;
+
+        box-shadow: 0 -3px 12px rgba(0,0,0,0.12);
     }
 
-    /* Navigation buttons */
+    /* Each navigation item */
     div[role="radiogroup"] label {
-        flex: 1;
-        justify-content: center;
-        text-align: center;
-        font-size: 12px;
+        flex: 1 !important;
+
+        display: flex !important;
+        flex-direction: column !important;
+
+        align-items: center !important;
+        justify-content: center !important;
+
+        text-align: center !important;
+
+        font-size: 11px !important;
+        font-weight: 500 !important;
+
+        padding: 4px 0 !important;
+
+        margin: 0 !important;
     }
 
+    /* Radio circle hidden */
+    div[role="radiogroup"] label > div:first-child {
+        display: none !important;
+    }
+
+    /* Navigation text */
+    div[role="radiogroup"] label p {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
 }
 
 /* Desktop */
@@ -244,7 +271,7 @@ navigation = st.radio(
 st.session_state.active_page = navigation
 
 # ==================================================
-# END MOBILE NAVIGATION
+# END MOBILE BOTTOM NAVIGATION
 # ==================================================
 # ==================================================
 # 🏠 HOME PAGE
