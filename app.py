@@ -767,7 +767,7 @@ if st.button(
                 case_id = activity.get("Case ID", "N/A")
                 message = activity.get("Message", "Unknown activity")
                 activity_time = activity.get("Time", "Unknown time")
-                else:
+            else:
                 activity_text = str(activity)
 
                 case_id = "N/A"
