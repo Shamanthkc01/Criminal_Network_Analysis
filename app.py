@@ -1234,9 +1234,10 @@ analysis_file = st.file_uploader(
     key="case_analysis_image"
 )
 if analysis_file is not None and case_id:
+
     file_bytes = np.asarray(
-    bytearray(analysis_file.read()),
-    dtype=np.uint8
+        bytearray(analysis_file.read()),
+        dtype=np.uint8
     )
 
     image = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
@@ -1245,69 +1246,92 @@ if analysis_file is not None and case_id:
         st.error("❌ Unable to read the uploaded image.")
         st.stop()
 
-        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    # Convert image to grayscale
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-        cascade_path = os.path.join(
-            cv2.data.haarcascades,
-            "haarcascade_frontalface_default.xml"
-        )
+    # Load Haar Cascade
+    cascade_path = os.path.join(
+        cv2.data.haarcascades,
+        "haarcascade_frontalface_default.xml"
+    )
 
-        face_cascade = cv2.CascadeClassifier(cascade_path)
+    face_cascade = cv2.CascadeClassifier(cascade_path)
 
-        if face_cascade.empty():
-            st.error("❌ Face detection model could not be loaded.")
-            st.stop()
+    if face_cascade.empty():
+        st.error("❌ Face detection model could not be loaded.")
+        st.stop()
 
-        faces = face_cascade.detectMultiScale(
+    # Detect faces
+    faces = face_cascade.detectMultiScale(
         gray,
         scaleFactor=1.1,
         minNeighbors=5
     )
 
-        for (x, y, w, h) in faces:
-            cv2.rectangle(
-                image,
-                (x, y),
-                (x + w, y + h),
-                (255, 0, 0),
-                2
-            )
+    # Draw rectangles around detected faces
+    for (x, y, w, h) in faces:
+        cv2.rectangle(
+            image,
+            (x, y),
+            (x + w, y + h),
+            (255, 0, 0),
+            2
+        )
 
-        result = {
-            "case_id": case_id,
-            "faces_detected": len(faces)
-        }
+    # Create result
+    result = {
+        "case_id": case_id,
+        "faces_detected": len(faces)
+    }
 
-        st.success(f"✅ Faces detected: {len(faces)}")
+    # Show result immediately
+    st.success("✅ Face Detection Complete")
+    st.write(f"👤 Faces Detected: {len(faces)}")
 
-        st.session_state.ai_results[case_id] = result
-        with open(AI_FILE, "w", encoding="utf-8") as f:
-            json.dump(
+    # Display analyzed image
+    st.image(
+        cv2.cvtColor(image, cv2.COLOR_BGR2RGB),
+        caption="Analyzed Image",
+        use_container_width=True
+    )
+
+    # Save result
+    st.session_state.ai_results[case_id] = result
+
+    with open(AI_FILE, "w", encoding="utf-8") as f:
+        json.dump(
             st.session_state.ai_results,
             f,
             indent=4,
             ensure_ascii=False
-            )
+        )
 
-        st.success(
+    st.success(
         f"✅ AI analysis saved to Case {case_id}"
     )
-        st.warning(
+
+    st.warning(
         "⚠️ This result is only a computer-vision observation.\n"
         "It does not establish identity or criminal responsibility."
-        )
+    )
 
 elif analysis_file is not None:
     st.warning("⚠️ Enter a Case ID first.")
-
 st.subheader("📊 Saved AI Results")
 
 if st.session_state.ai_results:
-    
-    for case_id, result in st.session_state.ai_results.items():
+
+    for saved_case_id, result in st.session_state.ai_results.items():
 
         st.divider()
-        
+
+        st.write(f"### 📁 Case {saved_case_id}")
+
+        st.write(
+            f"👤 Faces Detected: "
+            f"**{result.get('faces_detected', 0)}**"
+        )
+
 else:
     st.info("No AI analysis results saved yet.")
 
