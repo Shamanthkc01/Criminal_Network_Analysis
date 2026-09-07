@@ -1385,10 +1385,10 @@ elif option == "Evidence Analysis":
                             )
 
                 except Exception as e:
-                st.error(
-                f"❌ Face detector initialization failed: {e}"
-                )
-                face_cascade = None
+                    st.error(
+                    f"❌ Face detector initialization failed: {e}"
+                    )
+                    face_cascade = None
                    
                         if face_cascade is not None and not face_cascade.empty():
                             faces = face_cascade.detectMultiScale(
