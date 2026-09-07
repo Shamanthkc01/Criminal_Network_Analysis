@@ -1367,9 +1367,9 @@ elif option == "Evidence Analysis":
                     )
 
                     if not os.path.exists(cascade_path):
-                    st.error(
-                    f"❌ Haar Cascade file not found:\n{cascade_path}"
-                    )
+                        st.error(
+                        f"❌ Haar Cascade file not found:\n{cascade_path}"
+                        )
                     else:
                         face_cascade = cv2.CascadeClassifier(
                             cascade_path
