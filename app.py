@@ -1280,22 +1280,22 @@ if analysis_file is not None and case_id:
 
         st.success(f"✅ Faces detected: {len(faces)}")
 
-    st.session_state.ai_results[case_id] = result
-    with open(AI_FILE, "w", encoding="utf-8") as f:
-        json.dump(
-        st.session_state.ai_results,
-        f,
-        indent=4,
-        ensure_ascii=False
-    )
+        st.session_state.ai_results[case_id] = result
+        with open(AI_FILE, "w", encoding="utf-8") as f:
+            json.dump(
+            st.session_state.ai_results,
+            f,
+            indent=4,
+            ensure_ascii=False
+            )
 
-    st.success(
-    f"✅ AI analysis saved to Case {case_id}"
-)
-    st.warning(
-    "⚠️ This result is only a computer-vision observation.\n"
-    "It does not establish identity or criminal responsibility."
+        st.success(
+        f"✅ AI analysis saved to Case {case_id}"
     )
+        st.warning(
+        "⚠️ This result is only a computer-vision observation.\n"
+        "It does not establish identity or criminal responsibility."
+        )
 
 elif analysis_file is not None:
     st.warning("⚠️ Enter a Case ID first.")
