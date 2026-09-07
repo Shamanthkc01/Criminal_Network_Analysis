@@ -1307,15 +1307,16 @@ report_case_id = st.text_input(
 )
 
 if st.button("📊 Generate Report"):
-    
+
     case_found = None
-    
+
     for case in st.session_state.cases:
         if case["Case ID"].lower() == report_case_id.lower():
             case_found = case
             break
-            
+
     if case_found:
+
         report_text = f"""
 INVESTIGATION REPORT
 
@@ -1327,30 +1328,34 @@ Description:
 {case_found["Description"]}
 """
 
-    if report_case_id in st.session_state.ai_results:
+        if report_case_id in st.session_state.ai_results:
 
-        result = st.session_state.ai_results[report_case_id]
+            result = st.session_state.ai_results[report_case_id]
 
-        report_text += f"""
+            report_text += f"""
 
-    AI ANALYSIS
+AI ANALYSIS
 
-    Evidence Image: {result["image"]}
-    Faces Detected: {result["faces_detected"]}
-    """
-        report_text += """
+Evidence Image: {result["image"]}
+Faces Detected: {result["faces_detected"]}
+"""
 
-    NOTE:
-    AI observations are not proof of identity or criminal responsibil
-    All findings must be reviewed by a qualified investigator.
-    """
+            report_text += """
 
-    st.download_button(
-    label="📤 Download Case Report",
-    data=report_text,
-    file_name=f"{report_case_id}_report.txt",
-    mime="text/plain"
-    )
+NOTE:
+AI observations are not proof of identity or criminal responsibility.
+All findings must be reviewed by a qualified investigator.
+"""
+
+        st.download_button(
+            label="📤 Download Case Report",
+            data=report_text,
+            file_name=f"{report_case_id}_report.txt",
+            mime="text/plain"
+        )
+
+    else:
+        st.error("Case ID not found.")
 
 # Step 28: Live Dashboard Statistics
 
