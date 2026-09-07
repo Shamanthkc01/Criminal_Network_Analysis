@@ -1247,30 +1247,30 @@ if analysis_file is not None and case_id:
         st.stop()
 
     # Convert image to grayscale
-        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
     # Load Haar Cascade
-        cascade_path = os.path.join(
+    cascade_path = os.path.join(
         cv2.data.haarcascades,
         "haarcascade_frontalface_default.xml"
         )
 
-        face_cascade = cv2.CascadeClassifier(cascade_path)
+    face_cascade = cv2.CascadeClassifier(cascade_path)
 
-        if face_cascade.empty():
-            st.error("❌ Face detection model could not be loaded.")
+    if face_cascade.empty():
+        st.error("❌ Face detection model could not be loaded.")
             st.stop()
 
     # Detect faces
-        faces = face_cascade.detectMultiScale(
+    faces = face_cascade.detectMultiScale(
             gray,
             scaleFactor=1.1,
             minNeighbors=5
         )
 
     # Draw rectangles around detected faces
-        for (x, y, w, h) in faces:
-            cv2.rectangle(
+    for (x, y, w, h) in faces:
+        cv2.rectangle(
                 image,
                 (x, y),
                 (x + w, y + h),
@@ -1279,38 +1279,38 @@ if analysis_file is not None and case_id:
             )
 
     # Create result
-        result = {
+    result = {
         "case_id": case_id,
         "faces_detected": len(faces)
         }
 
     # Show result immediately
-        st.success("✅ Face Detection Complete")
-        st.write(f"👤 Faces Detected: {len(faces)}")
+    st.success("✅ Face Detection Complete")
+    st.write(f"👤 Faces Detected: {len(faces)}")
 
     # Display analyzed image
-        st.image(
-            cv2.cvtColor(image, cv2.COLOR_BGR2RGB),
+    st.image(
+        cv2.cvtColor(image, cv2.COLOR_BGR2RGB),
             caption="Analyzed Image",
             use_container_width=True
-        )
+    )
 
     # Save result
-        st.session_state.ai_results[case_id] = result
+    st.session_state.ai_results[case_id] = result
 
-        with open(AI_FILE, "w", encoding="utf-8") as f:
-            json.dump(
+    with open(AI_FILE, "w", encoding="utf-8") as f:
+        json.dump(
                 st.session_state.ai_results,
                 f,
                 indent=4,
                 ensure_ascii=False
             )
 
-        st.success(
+    st.success(
         f"✅ AI analysis saved to Case {case_id}"
         )
 
-        st.warning(
+    st.warning(
         "⚠️ This result is only a computer-vision observation.\n"
         "It does not establish identity or criminal responsibility."
         )
@@ -1322,9 +1322,6 @@ st.subheader("📊 Saved AI Results")
 if st.session_state.ai_results:
 
     for saved_case_id, result in st.session_state.ai_results.items():
-
-        st.divider()
-
         st.write(f"### 📁 Case {saved_case_id}")
 
         st.write(
