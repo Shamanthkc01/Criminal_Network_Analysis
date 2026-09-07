@@ -1,4 +1,5 @@
 def generate_investigation_summary(entity, graph):
+
     if entity not in graph:
         return "Entity not found."
 
@@ -13,19 +14,38 @@ def generate_investigation_summary(entity, graph):
 
     for connection in connections:
 
-        relationship = graph[entity][connection].get("relationship", "Unknown")
+        edge_data = graph[entity][connection]
 
-        if relationship == "Communication":
-            communication.append(connection)
+        # Get all relationship types
+        relationships = edge_data.get(
+            "relationships",
+            [edge_data.get("relationship", "Unknown")]
+        )
 
-        elif relationship == "Financial":
-            financial.append(connection)
+        for relationship in relationships:
 
-        elif relationship == "Location":
-            locations.append(connection)
+            relationship = str(relationship).strip()
 
-        else:
-            other.append(connection)
+            if relationship == "Communication":
+
+                if connection not in communication:
+                    communication.append(connection)
+
+            elif relationship == "Financial":
+
+                if connection not in financial:
+                    financial.append(connection)
+
+            elif relationship == "Location":
+
+                if connection not in locations:
+                    locations.append(connection)
+
+            else:
+
+                if connection not in other:
+                    other.append(connection)
+
     summary = f"""
 ### 🤖 Investigation Summary: {entity}
 
@@ -41,22 +61,30 @@ def generate_investigation_summary(entity, graph):
 """
 
     if communication:
+
         summary += "\n**📞 Communication connections:**\n"
+
         for person in communication:
             summary += f"- {person}\n"
 
     if financial:
+
         summary += "\n**💰 Financial connections:**\n"
+
         for person in financial:
             summary += f"- {person}\n"
 
     if locations:
+
         summary += "\n**📍 Location associations:**\n"
+
         for location in locations:
             summary += f"- {location}\n"
 
     if other:
+
         summary += "\n**🔗 Other relationships:**\n"
+
         for connection in other:
             summary += f"- {connection}\n"
 
@@ -76,5 +104,3 @@ before drawing conclusions.
 """
 
     return summary
-
-    
