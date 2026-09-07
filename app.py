@@ -1259,7 +1259,7 @@ if analysis_file is not None and case_id:
 
     if face_cascade.empty():
         st.error("❌ Face detection model could not be loaded.")
-            st.stop()
+        st.stop()
 
     # Detect faces
     faces = face_cascade.detectMultiScale(
