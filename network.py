@@ -30,40 +30,57 @@ def get_entity_type(entity):
 
 def calculate_priority(graph):
     results = []
+
     for entity in graph.nodes():
-        connections = list( 
-            graph.neighbors(entity)
-        )
+
+        connections = list(graph.neighbors(entity))
+
         total_connections = len(connections)
+
         communication = 0
         financial = 0
         location = 0
 
         for neighbor in connections:
-            relationship = graph[entity] [neighbor].get( "relationship","")
 
-            if relationship == "Communication":
+            edge_data = graph[entity][neighbor]
+
+            # New unified network stores all relationship types here
+            relationships = edge_data.get("relationships", [])
+
+            # Backward compatibility with old graph format
+            if not relationships:
+                relationship = edge_data.get("relationship", "")
+                relationships = [relationship]
+
+            if "Communication" in relationships:
                 communication += 1
-            elif relationship == "Financial": 
+
+            if "Financial" in relationships:
                 financial += 1
-            elif relationship == "Location": 
+
+            if "Location" in relationships:
                 location += 1
 
-                # Explainable priority indicator
-                score = (total_connections * 5+communication *3+financial * 4+location * 2)
+        # Explainable priority indicator
+        score = (
+            total_connections * 5
+            + communication * 3
+            + financial * 4
+            + location * 2
+        )
 
-                results.append({
-                    "Entity": entity, 
-                    "Type": get_entity_type(entity), 
-                    "Connections": total_connections, 
-                    "Communication": communication, 
-                    "Financial": financial, 
-                    "Location": location, 
-                    "Priority Score": score
-                })
+        results.append({
+            "Entity": entity,
+            "Type": get_entity_type(entity),
+            "Connections": total_connections,
+            "Communication": communication,
+            "Financial": financial,
+            "Location": location,
+            "Priority Score": score
+        })
 
     return pd.DataFrame(results)
-
 def calculate_importance(graph):
     importance = nx.degree_centrality(graph)
     return importance
