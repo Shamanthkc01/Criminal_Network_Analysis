@@ -786,6 +786,10 @@ with col3:
 
 st.divider()
 
+# ============================================================
+# 📋 INVESTIGATION TOOLS
+# ============================================================
+
 st.write("### 📋 Investigation Tools")
 
 option = st.selectbox(
@@ -795,482 +799,68 @@ option = st.selectbox(
         "Criminal Database",
         "Case Search",
         "Evidence Analysis"
-    ]
+    ],
+    key="investigation_tool"
 )
+
 st.info(f"Selected tool: {option}")
-# Step 18: Case Registration
+
+
+# ============================================================
+# CASE FILE
+# ============================================================
+
 CASE_FILE = "cases.json"
 
 if os.path.exists(CASE_FILE):
-    with open(CASE_FILE, "r", encoding="utf-8") as f:
-        st.session_state.cases = json.load(f)
+
+    try:
+        with open(CASE_FILE, "r", encoding="utf-8") as f:
+            st.session_state.cases = json.load(f)
+
+        if not isinstance(st.session_state.cases, list):
+            st.session_state.cases = []
+
+    except Exception:
+        st.session_state.cases = []
+
 else:
     st.session_state.cases = []
 
-st.subheader("📝 Register New Case")
-
-
-with st.form("case_form"):
-    case_id = st.text_input("Case ID")
-    case_title = st.text_input("Case Title")
-    location = st.text_input("Crime Location")
-    description = st.text_area("Case Description")
-    priority = st.selectbox(
-        "Case Priority",
-        ["Low","Medium","High"]
-    )
-    
-    detection_result= st.selectbox(
-            "Detection Result",
-            ["Not Detected","Detected"],
-            index=0
-        )
-    submitted = st.form_submit_button("Create Case")
-
-if submitted:
-    if case_id and case_title and location:
-        new_case = {
-            "Case ID": case_id,
-            "Case Title": case_title,
-            "Location": location,
-            "Description": description,
-            "priority": priority,
-            "Detection Result": detection_result
-        }
-
-        st.session_state.cases.append(new_case)
-
-        # Save cases permanently
-        with open(CASE_FILE, "w", encoding="utf-8") as f:
-            json.dump(st.session_state.cases, f, indent=4)
-
-        st.success(f"✅ Case {case_id} created successfully!")
-
-    else:
-        st.error("⚠️ Please fill in Case ID, Case Title and Crime Location")
-# ================= DELETE CASE =================
-
-st.subheader("🗑️ Delete Case")
-
-case_ids = [
-    str(case.get("Case ID", case.get("case_id", "")))
-    for case in st.session_state.cases
-    if case.get("Case ID", case.get("case_id", "")) != ""
-]
-
-if case_ids:
-
-    delete_case_id = st.selectbox(
-        "Select Case ID to Delete",
-        case_ids,
-        key="delete_case_select"
-    )
-
-    if st.button(
-        "🗑️ Delete Selected Case",
-        key="delete_case_button"
-    ):
-
-        # Remove selected case
-        updated_cases = [
-            case for case in st.session_state.cases
-            if str(
-                case.get(
-                    "Case ID",
-                    case.get("case_id", "")
-                )
-            ) != str(delete_case_id)
-        ]
-
-        # Save locally
-        with open(CASE_FILE, "w", encoding="utf-8") as f:
-            json.dump(
-                updated_cases,
-                f,
-                indent=4,
-                ensure_ascii=False
-            )
-
-        # Update session state
-        st.session_state.cases = updated_cases
-
-        # Save permanently to GitHub
-        github_saved = save_cases_to_github(updated_cases)
-
-        if github_saved:
-            st.success(
-                f"✅ Case {delete_case_id} deleted permanently!"
-            )
-            st.info(
-                "☁️ Updated cases.json has been saved to GitHub."
-            )
-        else:
-            st.warning(
-                "⚠️ Case deleted locally, but GitHub could not "
-                "be updated."
-            )
-
-        st.rerun()
-
-else:
-    st.info("📂 No cases available to delete.")
-    
-#-----EDIT CASE-----
-st.subheader("✏️ Edit Case")
-
-edit_case_id = st.text_input(
-    "Enter Case ID to Edit",
-    key="edit_case_id"
-)
-
-if st.button("Load Case", key="load_case_button"):
-
-    edit_case = next(
-        (
-            case for case in st.session_state.cases
-            if str(case.get("Case ID")) == str(edit_case_id)
-        ),
-        None
-    )
-
-    if edit_case:
-        st.session_state.edit_case = edit_case
-        st.success(f"✅ Case {edit_case_id} loaded.")
-    else:
-        st.error(f"❌ Case {edit_case_id} not found.")
-if "edit_case" in st.session_state:
-
-    edit_case = st.session_state.edit_case
-
-    edited_title = st.text_input(
-        "Case Title",
-        value=edit_case.get("Case Title", ""),
-        key="edited_title"
-    )
-
-    edited_location = st.text_input(
-        "Location",
-        value=edit_case.get("Location", ""),
-        key="edited_location"
-    )
-
-    edited_description = st.text_area(
-        "Description",
-        value=edit_case.get("Description", ""),
-        key="edited_description"
-    )
-
-    if st.button("Save Changes", key="save_case_changes"):
-        for case in st.session_state.cases:
-                if case.get("Case ID") == edit_case.get("Case ID"):
-                    case["Case Title"] = edited_title
-                    case["Location"] = edited_location
-                    case["Description"] = edited_description
-                    break
-        with open(CASE_FILE, "w", encoding="utf-8") as f:
-            json.dump(
-                st.session_state.cases,
-                f,
-                indent=4,
-                ensure_ascii=False
-            )
-        del st.session_state["edit_case"]
-
-        st.success("✅ Case updated successfully!")
-
-# ================= SEARCH CASES =================
-
-if "search_id" not in st.session_state:
-    st.session_state.search_reset =False
-def reset_search():
-    st.session_state.search_id = ""
-
-st.subheader("🔍 Search Cases")
-
-search_id = st.text_input(
-    "Enter Case ID to search",
-    placeholder="Example: 1 or theft",
-    key="search_id"
-)
-
-priority_filter = st.selectbox(
-    "Filter by priority",
-    ["All", "Low", "Medium", "High"]
-)
-
-status_filter = st.selectbox(
-    "Filter by Status",
-    ["All", "Open", "Investigating", "Solved", "Closed"]
-)
-
-detection_filter = st.selectbox(
-    "Detection Result",
-    ["All", "Detected", "Not Detected"]
-)
-# Reset button
-st.button(
-    "🔄 Reset Search",
-    on_click=reset_search
-)
-
-if st.button("🔄 Refresh Cases"):
-    st.rerun()
-
-# ================= FILTER CASES =================
-
-filtered_cases = []
-
-# Search by Case ID
-if search_id.strip() != "":
-    search_text = search_id.strip().lower()
-
-    for case in st.session_state.cases:
-
-        case_id = str(
-            case.get("Case ID", case.get("case_id", ""))
-        ).strip().lower()
-
-        if search_text in case_id:
-            filtered_cases.append(case)
-
-
-# Priority filter
-if priority_filter != "All":
-    filtered_cases = [
-        case for case in filtered_cases
-        if case.get("priority", "Normal") == priority_filter
-    ]
-
-
-# Status filter
-if status_filter != "All":
-    filtered_cases = [
-        case for case in filtered_cases
-        if case.get("status", "Open") == status_filter
-    ]
-
-
-# Detection Result filter
-if detection_filter != "All":
-    filtered_cases = [
-        case for case in filtered_cases
-        if case.get("Detection Result", "Not Detected") == detection_filter
-    ]
-
-
-# ================= CASES FOUND =================
-
-st.write(f"📊 Cases Found: {len(filtered_cases)}")
-
-if filtered_cases:
-
-    for case in filtered_cases:
-
-        st.write("---")
-
-        st.write(f"**Case ID:** {case.get('Case ID', 'N/A')}")
-        st.write(f"**Case Title:** {case.get('Case Title', 'N/A')}")
-        st.write(f"**Location:** {case.get('Location', 'N/A')}")
-        st.write(f"**Description:** {case.get('Description', 'N/A')}")
-        st.write(f"**Priority:** {case.get('priority', 'N/A')}")
-        status= case.get("update_case_id", "Not Applicable")
-        st.write(f"**Status:** {case.get('status', 'N/A')}")
-        
-
-else:
-
-    st.warning("🔎 No cases found matching your search.")
-
-st.subheader("📂 View Case Details")
-
-case_ids = [
-    str(case.get("Case ID"))
-    for case in st.session_state.cases
-    if case.get("Case ID") is not None
-]
-if case_ids:
-    selected_case_id = st.selectbox(
-        "Select",
-         ["Select a case"]+ case_ids,
-        index=0
-    )
-    if selected_case_id =="Select a case":
-        selected_case_id = None
-else:
-    selected_case_id = None
-    
-if selected_case_id:
-    selected_case = next(
-        (
-            case for case in st.session_state.cases
-            if str(case.get("Case ID")) == selected_case_id
-        ),
-        None
-    )
-
-    if selected_case:
-        st.write("### Case Information")
-        priority = selected_case.get("priority", "Normal")
-
-        if priority == "High":
-            st.error(f"🚨 Priority: {priority}")
-        elif priority == "Medium":
-            st.warning(f"⚠️ Priority: {priority}")
-        else:
-            st.success(f"🟢 Priority: {priority}")
-
-        detection_result = selected_case.get("Detection Result", "Not Detected")
-
-        if detection_result == "Detected":
-            st.error(f"🔴 Detection Result: {detection_result}")
-        else:
-            st.info(f"🟢 Detection Result: {detection_result}")    
-
-        status = selected_case.get("status", "Unknown")
-        if status == "Investigating":
-            st.warning(f"🔍 Status: {status}")
-        elif status == "Solved":
-            st.success(f"✅ Status: {status}")
-        elif status == "Closed":
-            st.info(f"🔒 Status: {status}")
-        else:
-            st.write(f"📌 Status: {status}")
-
-    
-        for key, value in selected_case.items():
-            st.markdown(f"**{key.replace('_',' ').title()}:**{value}")
-
-# Step 21: Evidence Upload
-if "evidence" not in st.session_state:
-    st.session_state.evidence = {}
-
-# Step 22: Link Evidence to Case
 
 # ============================================================
-# 📁 CASE EVIDENCE
+# 📁 EVIDENCE FILE
 # ============================================================
-
-st.subheader("📁 Case Evidence")
 
 EVIDENCE_FILE = "evidence.json"
 EVIDENCE_FOLDER = "case_evidence"
 
-# Create evidence folder
 os.makedirs(EVIDENCE_FOLDER, exist_ok=True)
 
-# Load saved evidence
 if "evidence" not in st.session_state:
+
     if os.path.exists(EVIDENCE_FILE):
+
         try:
             with open(EVIDENCE_FILE, "r", encoding="utf-8") as f:
                 st.session_state.evidence = json.load(f)
+
         except Exception:
             st.session_state.evidence = {}
+
     else:
         st.session_state.evidence = {}
 
 
-# Enter Case ID
-selected_case = st.text_input(
-    "Enter Case ID",
-    key="evidence_case_id"
-)
-
-# Upload evidence
-uploaded_file = st.file_uploader(
-    "Upload evidence image",
-    type=["jpg", "jpeg", "png"],
-    key="evidence_upload"
-)
-
-
-# Save Evidence
-if uploaded_file is not None and selected_case:
-
-    safe_name = os.path.basename(uploaded_file.name)
-
-    image_path = os.path.join(
-        EVIDENCE_FOLDER,
-        f"{selected_case}_{safe_name}"
-    )
-
-    # Save image
-    with open(image_path, "wb") as f:
-        f.write(uploaded_file.getbuffer())
-
-    # Create case entry if it doesn't exist
-    if selected_case not in st.session_state.evidence:
-        st.session_state.evidence[selected_case] = []
-
-    # Avoid duplicate evidence paths
-    if image_path not in st.session_state.evidence[selected_case]:
-        st.session_state.evidence[selected_case].append(image_path)
-
-    # Save evidence information
-    with open(EVIDENCE_FILE, "w", encoding="utf-8") as f:
-        json.dump(
-            st.session_state.evidence,
-            f,
-            indent=4,
-            ensure_ascii=False
-        )
-
-    st.success(
-        f"✅ Evidence saved to Case {selected_case}"
-    )
-
-elif uploaded_file is not None:
-    st.warning("⚠️ Enter a Case ID first.")
-
-
-# Show saved evidence for selected case
-if selected_case:
-
-    case_evidence = st.session_state.evidence.get(
-        selected_case,
-        []
-    )
-
-    if case_evidence:
-
-        st.write("### 📂 Saved Evidence")
-
-        for evidence_path in case_evidence:
-
-            st.write(
-                f"📄 {os.path.basename(evidence_path)}"
-            )
-
-            # Display image if it still exists
-            if os.path.exists(evidence_path):
-                st.image(
-                    evidence_path,
-                    width=300
-                )
-
-    else:
-        st.info(
-            f"No evidence saved for Case {selected_case}."
-        )
-
-
-st.divider()
-
-
 # ============================================================
-# 🤖 AI EVIDENCE ANALYSIS
+# 🤖 AI RESULTS FILE
 # ============================================================
-
-st.subheader("🤖 AI Analysis & Case Record")
 
 AI_FILE = "ai_results.json"
 AI_IMAGE_FOLDER = "ai_analysis_images"
 
-# Create AI image folder
 os.makedirs(AI_IMAGE_FOLDER, exist_ok=True)
 
-
-# Load saved AI results
 if "ai_results" not in st.session_state:
 
     if os.path.exists(AI_FILE):
@@ -1286,14 +876,1269 @@ if "ai_results" not in st.session_state:
         st.session_state.ai_results = {}
 
 
-# Enter Case ID
+# ============================================================
+# HELPER FUNCTION
+# ============================================================
+
+def get_case_id(case):
+
+    return str(
+        case.get(
+            "Case ID",
+            case.get("case_id", "")
+        )
+    )
+
+
+# ============================================================
+# 👤 FACE DETECTION TOOL
+# ============================================================
+
+if option == "Face Detection":
+
+    st.write("### 👤 Face Detection")
+
+    st.info(
+        "Upload an image to detect faces using computer vision."
+    )
+
+    face_file = st.file_uploader(
+        "Upload image",
+        type=["jpg", "jpeg", "png"],
+        key="investigation_face_upload"
+    )
+
+    if face_file is not None:
+
+        file_bytes = np.asarray(
+            bytearray(face_file.read()),
+            dtype=np.uint8
+        )
+
+        image = cv2.imdecode(
+            file_bytes,
+            cv2.IMREAD_COLOR
+        )
+
+        if image is None:
+
+            st.error(
+                "❌ Unable to read the uploaded image."
+            )
+
+        else:
+
+            gray = cv2.cvtColor(
+                image,
+                cv2.COLOR_BGR2GRAY
+            )
+
+            cascade_path = os.path.join(
+                cv2.data.haarcascades,
+                "haarcascade_frontalface_default.xml"
+            )
+
+            face_cascade = cv2.CascadeClassifier(
+                cascade_path
+            )
+
+            if face_cascade.empty():
+
+                st.error(
+                    "❌ Face detection model could not be loaded."
+                )
+
+            else:
+
+                faces = face_cascade.detectMultiScale(
+                    gray,
+                    scaleFactor=1.1,
+                    minNeighbors=5,
+                    minSize=(30, 30)
+                )
+
+                for (x, y, w, h) in faces:
+
+                    cv2.rectangle(
+                        image,
+                        (x, y),
+                        (x + w, y + h),
+                        (255, 0, 0),
+                        2
+                    )
+
+                display_image = cv2.cvtColor(
+                    image,
+                    cv2.COLOR_BGR2RGB
+                )
+
+                st.success(
+                    f"✅ Face Detection Complete — "
+                    f"{len(faces)} face(s) detected."
+                )
+
+                st.image(
+                    display_image,
+                    caption="Face Detection Result",
+                    width=500
+                )
+
+                st.warning(
+                    "⚠️ Face detection only identifies visible "
+                    "face regions. It does not establish identity."
+                )
+
+
+# ============================================================
+# 🗄️ CRIMINAL DATABASE
+# ============================================================
+
+elif option == "Criminal Database":
+
+    st.write("### 🗄️ Criminal Database")
+
+    st.info(
+        "Search available criminal/investigation records."
+    )
+
+    if st.session_state.cases:
+
+        database_search = st.text_input(
+            "Search database",
+            placeholder="Case ID, title, location or description",
+            key="criminal_database_search"
+        )
+
+        search_text = database_search.strip().lower()
+
+        database_results = []
+
+        for case in st.session_state.cases:
+
+            searchable_text = " ".join([
+                str(case.get("Case ID", "")),
+                str(case.get("Case Title", "")),
+                str(case.get("Location", "")),
+                str(case.get("Description", "")),
+                str(case.get("priority", "")),
+                str(case.get("status", "")),
+                str(case.get("Detection Result", ""))
+            ]).lower()
+
+            if search_text == "" or search_text in searchable_text:
+
+                database_results.append(case)
+
+        st.write(
+            f"📊 Records Found: **{len(database_results)}**"
+        )
+
+        if database_results:
+
+            for case in database_results:
+
+                with st.expander(
+                    f"📁 Case {get_case_id(case)}"
+                ):
+
+                    st.write(
+                        f"**Case ID:** "
+                        f"{get_case_id(case)}"
+                    )
+
+                    st.write(
+                        f"**Case Title:** "
+                        f"{case.get('Case Title', 'N/A')}"
+                    )
+
+                    st.write(
+                        f"**Location:** "
+                        f"{case.get('Location', 'N/A')}"
+                    )
+
+                    st.write(
+                        f"**Description:** "
+                        f"{case.get('Description', 'N/A')}"
+                    )
+
+                    st.write(
+                        f"**Priority:** "
+                        f"{case.get('priority', 'N/A')}"
+                    )
+
+                    st.write(
+                        f"**Status:** "
+                        f"{case.get('status', 'Open')}"
+                    )
+
+                    st.write(
+                        f"**Detection Result:** "
+                        f"{case.get('Detection Result', 'Not Detected')}"
+                    )
+
+        else:
+
+            st.warning(
+                "🔎 No matching criminal records found."
+            )
+
+    else:
+
+        st.info(
+            "📂 No investigation records available yet."
+        )
+
+
+# ============================================================
+# 🔎 CASE SEARCH
+# ============================================================
+
+elif option == "Case Search":
+
+    st.write("### 🔎 Case Search")
+
+    st.info(
+        "Search registered cases using Case ID or other details."
+    )
+
+    search_id = st.text_input(
+        "Enter Case ID / keyword",
+        placeholder="Example: 1 or theft",
+        key="tool_case_search"
+    )
+
+    priority_filter = st.selectbox(
+        "Filter by priority",
+        ["All", "Low", "Medium", "High"],
+        key="tool_priority_filter"
+    )
+
+    status_filter = st.selectbox(
+        "Filter by Status",
+        ["All", "Open", "Investigating", "Solved", "Closed"],
+        key="tool_status_filter"
+    )
+
+    detection_filter = st.selectbox(
+        "Detection Result",
+        ["All", "Detected", "Not Detected"],
+        key="tool_detection_filter"
+    )
+
+    if st.button(
+        "🔄 Reset Search",
+        key="tool_reset_search"
+    ):
+
+        st.session_state.tool_case_search = ""
+
+        st.rerun()
+
+
+    # --------------------------------------------------------
+    # FILTER CASES
+    # --------------------------------------------------------
+
+    filtered_cases = []
+
+    search_text = search_id.strip().lower()
+
+    for case in st.session_state.cases:
+
+        case_id = get_case_id(case).lower()
+
+        case_title = str(
+            case.get("Case Title", "")
+        ).lower()
+
+        location = str(
+            case.get("Location", "")
+        ).lower()
+
+        description = str(
+            case.get("Description", "")
+        ).lower()
+
+        # Search condition
+        if search_text != "":
+
+            if not (
+                search_text in case_id
+                or search_text in case_title
+                or search_text in location
+                or search_text in description
+            ):
+                continue
+
+        # Priority
+        if priority_filter != "All":
+
+            if case.get("priority", "Low") != priority_filter:
+                continue
+
+        # Status
+        if status_filter != "All":
+
+            if case.get("status", "Open") != status_filter:
+                continue
+
+        # Detection
+        if detection_filter != "All":
+
+            if case.get(
+                "Detection Result",
+                "Not Detected"
+            ) != detection_filter:
+                continue
+
+        filtered_cases.append(case)
+
+
+    # --------------------------------------------------------
+    # DISPLAY RESULTS
+    # --------------------------------------------------------
+
+    st.write(
+        f"📊 Cases Found: **{len(filtered_cases)}**"
+    )
+
+    if filtered_cases:
+
+        for case in filtered_cases:
+
+            st.write("---")
+
+            st.write(
+                f"**Case ID:** "
+                f"{get_case_id(case)}"
+            )
+
+            st.write(
+                f"**Case Title:** "
+                f"{case.get('Case Title', 'N/A')}"
+            )
+
+            st.write(
+                f"**Location:** "
+                f"{case.get('Location', 'N/A')}"
+            )
+
+            st.write(
+                f"**Description:** "
+                f"{case.get('Description', 'N/A')}"
+            )
+
+            st.write(
+                f"**Priority:** "
+                f"{case.get('priority', 'N/A')}"
+            )
+
+            st.write(
+                f"**Status:** "
+                f"{case.get('status', 'Open')}"
+            )
+
+            st.write(
+                f"**Detection Result:** "
+                f"{case.get('Detection Result', 'Not Detected')}"
+            )
+
+    else:
+
+        st.warning(
+            "🔎 No cases found matching your search."
+        )
+
+
+# ============================================================
+# 📁 EVIDENCE ANALYSIS TOOL
+# ============================================================
+
+elif option == "Evidence Analysis":
+
+    st.write("### 📁 Evidence Analysis")
+
+    st.info(
+        "Analyze evidence associated with a registered case."
+    )
+
+    case_ids_for_evidence = [
+        get_case_id(case)
+        for case in st.session_state.cases
+        if get_case_id(case) != ""
+    ]
+
+    if not case_ids_for_evidence:
+
+        st.warning(
+            "⚠️ No registered cases available."
+        )
+
+    else:
+
+        evidence_case_id = st.selectbox(
+            "Select Case ID",
+            ["Select a case"] + case_ids_for_evidence,
+            key="evidence_analysis_case"
+        )
+
+        if evidence_case_id != "Select a case":
+
+            saved_evidence = st.session_state.evidence.get(
+                evidence_case_id,
+                []
+            )
+
+            st.write(
+                f"### 📂 Evidence for Case "
+                f"{evidence_case_id}"
+            )
+
+            if saved_evidence:
+
+                st.success(
+                    f"✅ {len(saved_evidence)} evidence file(s) found."
+                )
+
+                for evidence_path in saved_evidence:
+
+                    st.write(
+                        f"📄 {os.path.basename(evidence_path)}"
+                    )
+
+                    if os.path.exists(evidence_path):
+
+                        st.image(
+                            evidence_path,
+                            width=300
+                        )
+
+            else:
+
+                st.info(
+                    "No saved evidence found for this case."
+                )
+
+
+            # ------------------------------------------------
+            # UPLOAD NEW EVIDENCE
+            # ------------------------------------------------
+
+            new_evidence = st.file_uploader(
+                "Upload evidence for analysis",
+                type=["jpg", "jpeg", "png"],
+                key="investigation_evidence_upload"
+            )
+
+            if new_evidence is not None:
+
+                st.write("### 🔬 Evidence Analysis")
+
+                file_bytes = np.asarray(
+                    bytearray(new_evidence.read()),
+                    dtype=np.uint8
+                )
+
+                evidence_image = cv2.imdecode(
+                    file_bytes,
+                    cv2.IMREAD_COLOR
+                )
+
+                if evidence_image is None:
+
+                    st.error(
+                        "❌ Unable to read evidence image."
+                    )
+
+                else:
+
+                    gray = cv2.cvtColor(
+                        evidence_image,
+                        cv2.COLOR_BGR2GRAY
+                    )
+
+                    cascade_path = os.path.join(
+                        cv2.data.haarcascades,
+                        "haarcascade_frontalface_default.xml"
+                    )
+
+                    face_cascade = cv2.CascadeClassifier(
+                        cascade_path
+                    )
+
+                    if face_cascade.empty():
+
+                        st.error(
+                            "❌ Face detection model could not be loaded."
+                        )
+
+                    else:
+
+                        faces = face_cascade.detectMultiScale(
+                            gray,
+                            scaleFactor=1.1,
+                            minNeighbors=5,
+                            minSize=(30, 30)
+                        )
+
+                        for (x, y, w, h) in faces:
+
+                            cv2.rectangle(
+                                evidence_image,
+                                (x, y),
+                                (x + w, y + h),
+                                (255, 0, 0),
+                                2
+                            )
+
+                        display_evidence = cv2.cvtColor(
+                            evidence_image,
+                            cv2.COLOR_BGR2RGB
+                        )
+
+                        st.success(
+                            f"✅ Evidence Analysis Complete — "
+                            f"{len(faces)} face(s) detected."
+                        )
+
+                        st.image(
+                            display_evidence,
+                            caption=(
+                                f"Evidence Analysis - "
+                                f"Case {evidence_case_id}"
+                            ),
+                            width=500
+                        )
+
+                        st.warning(
+                            "⚠️ This analysis detects visible face "
+                            "regions only. It does not establish identity."
+                        )
+
+
+# ============================================================
+# 📝 REGISTER NEW CASE
+# ============================================================
+
+st.divider()
+
+st.subheader("📝 Register New Case")
+
+with st.form("case_form"):
+
+    case_id = st.text_input("Case ID")
+
+    case_title = st.text_input("Case Title")
+
+    location = st.text_input("Crime Location")
+
+    description = st.text_area("Case Description")
+
+    priority = st.selectbox(
+        "Case Priority",
+        ["Low", "Medium", "High"]
+    )
+
+    detection_result = st.selectbox(
+        "Detection Result",
+        ["Not Detected", "Detected"],
+        index=0
+    )
+
+    submitted = st.form_submit_button(
+        "Create Case"
+    )
+
+
+if submitted:
+
+    if case_id and case_title and location:
+
+        # Prevent duplicate Case IDs
+        duplicate = any(
+            get_case_id(case) == str(case_id)
+            for case in st.session_state.cases
+        )
+
+        if duplicate:
+
+            st.error(
+                f"❌ Case ID {case_id} already exists."
+            )
+
+        else:
+
+            new_case = {
+                "Case ID": case_id,
+                "Case Title": case_title,
+                "Location": location,
+                "Description": description,
+                "priority": priority,
+                "Detection Result": detection_result,
+                "status": "Open"
+            }
+
+            st.session_state.cases.append(
+                new_case
+            )
+
+            with open(
+                CASE_FILE,
+                "w",
+                encoding="utf-8"
+            ) as f:
+
+                json.dump(
+                    st.session_state.cases,
+                    f,
+                    indent=4,
+                    ensure_ascii=False
+                )
+
+            st.success(
+                f"✅ Case {case_id} created successfully!"
+            )
+
+    else:
+
+        st.error(
+            "⚠️ Please fill in Case ID, Case Title "
+            "and Crime Location."
+        )
+
+
+# ============================================================
+# 🗑️ DELETE CASE
+# ============================================================
+
+st.subheader("🗑️ Delete Case")
+
+case_ids = [
+    get_case_id(case)
+    for case in st.session_state.cases
+    if get_case_id(case) != ""
+]
+
+if case_ids:
+
+    delete_case_id = st.selectbox(
+        "Select Case ID to Delete",
+        case_ids,
+        key="delete_case_select"
+    )
+
+    if st.button(
+        "🗑️ Delete Selected Case",
+        key="delete_case_button"
+    ):
+
+        updated_cases = [
+            case for case in st.session_state.cases
+            if get_case_id(case) != str(delete_case_id)
+        ]
+
+        with open(
+            CASE_FILE,
+            "w",
+            encoding="utf-8"
+        ) as f:
+
+            json.dump(
+                updated_cases,
+                f,
+                indent=4,
+                ensure_ascii=False
+            )
+
+        st.session_state.cases = updated_cases
+
+        # Existing GitHub function
+        github_saved = save_cases_to_github(
+            updated_cases
+        )
+
+        if github_saved:
+
+            st.success(
+                f"✅ Case {delete_case_id} deleted permanently!"
+            )
+
+            st.info(
+                "☁️ Updated cases.json has been saved to GitHub."
+            )
+
+        else:
+
+            st.warning(
+                "⚠️ Case deleted locally, but GitHub could not "
+                "be updated."
+            )
+
+        st.rerun()
+
+else:
+
+    st.info(
+        "📂 No cases available to delete."
+    )
+
+
+# ============================================================
+# ✏️ EDIT CASE
+# ============================================================
+
+st.subheader("✏️ Edit Case")
+
+edit_case_id = st.text_input(
+    "Enter Case ID to Edit",
+    key="edit_case_id"
+)
+
+if st.button(
+    "Load Case",
+    key="load_case_button"
+):
+
+    edit_case = next(
+        (
+            case for case in st.session_state.cases
+            if get_case_id(case) == str(edit_case_id)
+        ),
+        None
+    )
+
+    if edit_case:
+
+        st.session_state.edit_case = edit_case
+
+        st.success(
+            f"✅ Case {edit_case_id} loaded."
+        )
+
+    else:
+
+        st.error(
+            f"❌ Case {edit_case_id} not found."
+        )
+
+
+if "edit_case" in st.session_state:
+
+    edit_case = st.session_state.edit_case
+
+    edited_title = st.text_input(
+        "Case Title",
+        value=edit_case.get(
+            "Case Title",
+            ""
+        ),
+        key="edited_title"
+    )
+
+    edited_location = st.text_input(
+        "Location",
+        value=edit_case.get(
+            "Location",
+            ""
+        ),
+        key="edited_location"
+    )
+
+    edited_description = st.text_area(
+        "Description",
+        value=edit_case.get(
+            "Description",
+            ""
+        ),
+        key="edited_description"
+    )
+
+    edited_priority = st.selectbox(
+        "Priority",
+        ["Low", "Medium", "High"],
+        index=[
+            "Low",
+            "Medium",
+            "High"
+        ].index(
+            edit_case.get(
+                "priority",
+                "Low"
+            )
+        ),
+        key="edited_priority"
+    )
+
+    edited_status = st.selectbox(
+        "Status",
+        ["Open", "Investigating", "Solved", "Closed"],
+        index=[
+            "Open",
+            "Investigating",
+            "Solved",
+            "Closed"
+        ].index(
+            edit_case.get(
+                "status",
+                "Open"
+            )
+        ),
+        key="edited_status"
+    )
+
+    if st.button(
+        "Save Changes",
+        key="save_case_changes"
+    ):
+
+        for case in st.session_state.cases:
+
+            if get_case_id(case) == get_case_id(edit_case):
+
+                case["Case Title"] = edited_title
+                case["Location"] = edited_location
+                case["Description"] = edited_description
+                case["priority"] = edited_priority
+                case["status"] = edited_status
+
+                break
+
+        with open(
+            CASE_FILE,
+            "w",
+            encoding="utf-8"
+        ) as f:
+
+            json.dump(
+                st.session_state.cases,
+                f,
+                indent=4,
+                ensure_ascii=False
+            )
+
+        del st.session_state["edit_case"]
+
+        st.success(
+            "✅ Case updated successfully!"
+        )
+
+        st.rerun()
+
+
+# ============================================================
+# 🔍 SEARCH CASES
+# ============================================================
+
+st.subheader("🔍 Search Cases")
+
+search_id = st.text_input(
+    "Enter Case ID to search",
+    placeholder="Example: 1 or theft",
+    key="search_id"
+)
+
+priority_filter = st.selectbox(
+    "Filter by priority",
+    ["All", "Low", "Medium", "High"],
+    key="main_priority_filter"
+)
+
+status_filter = st.selectbox(
+    "Filter by Status",
+    ["All", "Open", "Investigating", "Solved", "Closed"],
+    key="main_status_filter"
+)
+
+detection_filter = st.selectbox(
+    "Detection Result",
+    ["All", "Detected", "Not Detected"],
+    key="main_detection_filter"
+)
+
+
+if st.button(
+    "🔄 Refresh Cases",
+    key="refresh_cases"
+):
+
+    st.rerun()
+
+
+# ============================================================
+# FILTER CASES
+# ============================================================
+
+filtered_cases = []
+
+search_text = search_id.strip().lower()
+
+for case in st.session_state.cases:
+
+    case_id = get_case_id(case).lower()
+
+    case_title = str(
+        case.get("Case Title", "")
+    ).lower()
+
+    location = str(
+        case.get("Location", "")
+    ).lower()
+
+    description = str(
+        case.get("Description", "")
+    ).lower()
+
+    if search_text != "":
+
+        if not (
+            search_text in case_id
+            or search_text in case_title
+            or search_text in location
+            or search_text in description
+        ):
+            continue
+
+    if priority_filter != "All":
+
+        if case.get(
+            "priority",
+            "Low"
+        ) != priority_filter:
+
+            continue
+
+    if status_filter != "All":
+
+        if case.get(
+            "status",
+            "Open"
+        ) != status_filter:
+
+            continue
+
+    if detection_filter != "All":
+
+        if case.get(
+            "Detection Result",
+            "Not Detected"
+        ) != detection_filter:
+
+            continue
+
+    filtered_cases.append(case)
+
+
+# ============================================================
+# CASES FOUND
+# ============================================================
+
+st.write(
+    f"📊 Cases Found: **{len(filtered_cases)}**"
+)
+
+if filtered_cases:
+
+    for case in filtered_cases:
+
+        st.write("---")
+
+        st.write(
+            f"**Case ID:** {get_case_id(case)}"
+        )
+
+        st.write(
+            f"**Case Title:** "
+            f"{case.get('Case Title', 'N/A')}"
+        )
+
+        st.write(
+            f"**Location:** "
+            f"{case.get('Location', 'N/A')}"
+        )
+
+        st.write(
+            f"**Description:** "
+            f"{case.get('Description', 'N/A')}"
+        )
+
+        st.write(
+            f"**Priority:** "
+            f"{case.get('priority', 'N/A')}"
+        )
+
+        st.write(
+            f"**Status:** "
+            f"{case.get('status', 'Open')}"
+        )
+
+        st.write(
+            f"**Detection Result:** "
+            f"{case.get('Detection Result', 'Not Detected')}"
+        )
+
+else:
+
+    if search_text:
+
+        st.warning(
+            "🔎 No cases found matching your search."
+        )
+
+    else:
+
+        st.info(
+            "📂 Enter a Case ID or keyword to search."
+        )
+
+
+# ============================================================
+# 📂 VIEW CASE DETAILS
+# ============================================================
+
+st.subheader("📂 View Case Details")
+
+case_ids = [
+    get_case_id(case)
+    for case in st.session_state.cases
+    if get_case_id(case) != ""
+]
+
+if case_ids:
+
+    selected_case_id = st.selectbox(
+        "Select",
+        ["Select a case"] + case_ids,
+        index=0,
+        key="view_case_select"
+    )
+
+    if selected_case_id == "Select a case":
+
+        selected_case_id = None
+
+else:
+
+    selected_case_id = None
+
+
+if selected_case_id:
+
+    selected_case = next(
+        (
+            case for case in st.session_state.cases
+            if get_case_id(case) == selected_case_id
+        ),
+        None
+    )
+
+    if selected_case:
+
+        st.write("### Case Information")
+
+        priority = selected_case.get(
+            "priority",
+            "Low"
+        )
+
+        if priority == "High":
+
+            st.error(
+                f"🚨 Priority: {priority}"
+            )
+
+        elif priority == "Medium":
+
+            st.warning(
+                f"⚠️ Priority: {priority}"
+            )
+
+        else:
+
+            st.success(
+                f"🟢 Priority: {priority}"
+            )
+
+
+        detection_result = selected_case.get(
+            "Detection Result",
+            "Not Detected"
+        )
+
+        if detection_result == "Detected":
+
+            st.error(
+                f"🔴 Detection Result: "
+                f"{detection_result}"
+            )
+
+        else:
+
+            st.info(
+                f"🟢 Detection Result: "
+                f"{detection_result}"
+            )
+
+
+        status = selected_case.get(
+            "status",
+            "Unknown"
+        )
+
+        if status == "Investigating":
+
+            st.warning(
+                f"🔍 Status: {status}"
+            )
+
+        elif status == "Solved":
+
+            st.success(
+                f"✅ Status: {status}"
+            )
+
+        elif status == "Closed":
+
+            st.info(
+                f"🔒 Status: {status}"
+            )
+
+        else:
+
+            st.write(
+                f"📌 Status: {status}"
+            )
+
+
+        for key, value in selected_case.items():
+
+            st.markdown(
+                f"**{key.replace('_', ' ').title()}:** {value}"
+            )
+
+
+# ============================================================
+# 📁 CASE EVIDENCE
+# ============================================================
+
+st.subheader("📁 Case Evidence")
+
+selected_evidence_case = st.text_input(
+    "Enter Case ID",
+    key="evidence_case_id"
+)
+
+uploaded_file = st.file_uploader(
+    "Upload evidence image",
+    type=["jpg", "jpeg", "png"],
+    key="evidence_upload"
+)
+
+
+if uploaded_file is not None and selected_evidence_case:
+
+    safe_name = os.path.basename(
+        uploaded_file.name
+    )
+
+    image_path = os.path.join(
+        EVIDENCE_FOLDER,
+        f"{selected_evidence_case}_{safe_name}"
+    )
+
+    with open(
+        image_path,
+        "wb"
+    ) as f:
+
+        f.write(
+            uploaded_file.getbuffer()
+        )
+
+    if selected_evidence_case not in st.session_state.evidence:
+
+        st.session_state.evidence[
+            selected_evidence_case
+        ] = []
+
+    if image_path not in st.session_state.evidence[
+        selected_evidence_case
+    ]:
+
+        st.session_state.evidence[
+            selected_evidence_case
+        ].append(image_path)
+
+    with open(
+        EVIDENCE_FILE,
+        "w",
+        encoding="utf-8"
+    ) as f:
+
+        json.dump(
+            st.session_state.evidence,
+            f,
+            indent=4,
+            ensure_ascii=False
+        )
+
+    st.success(
+        f"✅ Evidence saved to Case "
+        f"{selected_evidence_case}"
+    )
+
+
+elif uploaded_file is not None:
+
+    st.warning(
+        "⚠️ Enter a Case ID first."
+    )
+
+
+if selected_evidence_case:
+
+    case_evidence = st.session_state.evidence.get(
+        selected_evidence_case,
+        []
+    )
+
+    if case_evidence:
+
+        st.write("### 📂 Saved Evidence")
+
+        for evidence_path in case_evidence:
+
+            st.write(
+                f"📄 {os.path.basename(evidence_path)}"
+            )
+
+            if os.path.exists(evidence_path):
+
+                st.image(
+                    evidence_path,
+                    width=300
+                )
+
+    else:
+
+        st.info(
+            f"No evidence saved for Case "
+            f"{selected_evidence_case}."
+        )
+
+
+# ============================================================
+# 🤖 AI ANALYSIS & CASE RECORD
+# ============================================================
+
+st.divider()
+
+st.subheader("🤖 AI Analysis & Case Record")
+
 case_id = st.text_input(
     "Enter Case ID for this analysis",
     key="analysis_case"
 )
 
-
-# Upload image for AI analysis
 analysis_file = st.file_uploader(
     "Upload image for analysis",
     type=["jpg", "jpeg", "png"],
@@ -1307,141 +2152,118 @@ analysis_file = st.file_uploader(
 
 if analysis_file is not None and case_id:
 
-    # Read uploaded image
     file_bytes = np.asarray(
-        bytearray(analysis_file.read()),
+        bytearray(
+            analysis_file.read()
+        ),
         dtype=np.uint8
     )
 
-    # Decode image
     image = cv2.imdecode(
         file_bytes,
         cv2.IMREAD_COLOR
     )
 
-    # Check image
     if image is None:
+
         st.error(
             "❌ Unable to read the uploaded image."
         )
-        st.stop()
 
+    else:
 
-    # Convert to grayscale
-    gray = cv2.cvtColor(
-        image,
-        cv2.COLOR_BGR2GRAY
-    )
-
-
-    # Load Haar Cascade
-    cascade_path = os.path.join(
-        cv2.data.haarcascades,
-        "haarcascade_frontalface_default.xml"
-    )
-
-    face_cascade = cv2.CascadeClassifier(
-        cascade_path
-    )
-
-
-    # Check model
-    if face_cascade.empty():
-
-        st.error(
-            "❌ Face detection model could not be loaded."
-        )
-
-        st.stop()
-
-
-    # Detect faces
-    faces = face_cascade.detectMultiScale(
-        gray,
-        scaleFactor=1.1,
-        minNeighbors=5,
-        minSize=(30, 30)
-    )
-
-
-    # Draw rectangle around detected faces
-    for (x, y, w, h) in faces:
-
-        cv2.rectangle(
+        gray = cv2.cvtColor(
             image,
-            (x, y),
-            (x + w, y + h),
-            (255, 0, 0),
-            2
+            cv2.COLOR_BGR2GRAY
         )
 
-
-    # Number of faces
-    faces_detected = len(faces)
-
-
-    # ========================================================
-    # DISPLAY RESULT
-    # ========================================================
-
-    st.success(
-        f"✅ Face Detection Complete"
-    )
-
-    st.write(
-        f"👤 Faces Detected: **{faces_detected}**"
-    )
-
-
-    # Convert BGR → RGB for Streamlit
-    display_image = cv2.cvtColor(
-        image,
-        cv2.COLOR_BGR2RGB
-    )
-
-
-    # Show analysed image
-    st.image(
-        display_image,
-        caption=f"AI Analysis - Case {case_id}",
-        width=500
-    )
-
-
-    # ========================================================
-    # SAVE AI RESULT
-    # ========================================================
-
-    result = {
-        "case_id": case_id,
-        "faces_detected": faces_detected
-    }
-
-
-    # Save result in session state
-    st.session_state.ai_results[case_id] = result
-
-
-    # Save result permanently
-    with open(AI_FILE, "w", encoding="utf-8") as f:
-
-        json.dump(
-            st.session_state.ai_results,
-            f,
-            indent=4,
-            ensure_ascii=False
+        cascade_path = os.path.join(
+            cv2.data.haarcascades,
+            "haarcascade_frontalface_default.xml"
         )
 
+        face_cascade = cv2.CascadeClassifier(
+            cascade_path
+        )
 
-    st.success(
-        f"✅ AI analysis saved to Case {case_id}"
-    )
+        if face_cascade.empty():
 
+            st.error(
+                "❌ Face detection model could not be loaded."
+            )
 
-    st.warning(
-        "⚠️ This result is only a computer-vision observation. "
-        "It does not establish identity or criminal responsibility."
-    )
+        else:
+
+            faces = face_cascade.detectMultiScale(
+                gray,
+                scaleFactor=1.1,
+                minNeighbors=5,
+                minSize=(30, 30)
+            )
+
+            for (x, y, w, h) in faces:
+
+                cv2.rectangle(
+                    image,
+                    (x, y),
+                    (x + w, y + h),
+                    (255, 0, 0),
+                    2
+                )
+
+            faces_detected = len(faces)
+
+            st.success(
+                "✅ Face Detection Complete"
+            )
+
+            st.write(
+                f"👤 Faces Detected: "
+                f"**{faces_detected}**"
+            )
+
+            display_image = cv2.cvtColor(
+                image,
+                cv2.COLOR_BGR2RGB
+            )
+
+            st.image(
+                display_image,
+                caption=f"AI Analysis - Case {case_id}",
+                width=500
+            )
+
+            result = {
+                "case_id": case_id,
+                "faces_detected": faces_detected
+            }
+
+            st.session_state.ai_results[
+                case_id
+            ] = result
+
+            with open(
+                AI_FILE,
+                "w",
+                encoding="utf-8"
+            ) as f:
+
+                json.dump(
+                    st.session_state.ai_results,
+                    f,
+                    indent=4,
+                    ensure_ascii=False
+                )
+
+            st.success(
+                f"✅ AI analysis saved to Case {case_id}"
+            )
+
+            st.warning(
+                "⚠️ This result is only a computer-vision "
+                "observation. It does not establish identity "
+                "or criminal responsibility."
+            )
 
 
 elif analysis_file is not None:
@@ -1451,19 +2273,19 @@ elif analysis_file is not None:
     )
 
 
-st.divider()
-
-
 # ============================================================
 # 📊 SAVED AI RESULTS
 # ============================================================
 
-st.subheader("📊 Saved AI Results")
+st.divider()
 
+st.subheader("📊 Saved AI Results")
 
 if st.session_state.ai_results:
 
-    for saved_case_id, result in st.session_state.ai_results.items():
+    for saved_case_id, result in (
+        st.session_state.ai_results.items()
+    ):
 
         st.divider()
 
@@ -1477,7 +2299,8 @@ if st.session_state.ai_results:
         )
 
         st.write(
-            f"👤 Faces Detected: **{faces_count}**"
+            f"👤 Faces Detected: "
+            f"**{faces_count}**"
         )
 
         st.info(
