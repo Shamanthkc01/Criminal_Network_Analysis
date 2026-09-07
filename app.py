@@ -1356,30 +1356,49 @@ elif option == "Evidence Analysis":
                         evidence_image,
                         cv2.COLOR_BGR2GRAY
                     )
+                # ============================================================
+                # SAFE FACE DETECTOR
+                # ============================================================
 
+                try:
                     cascade_path = os.path.join(
                         cv2.data.haarcascades,
                         "haarcascade_frontalface_default.xml"
                     )
 
-                    face_cascade = cv2.CascadeClassifier(
-                        cascade_path
+                    if not os.path.exists(cascade_path):
+                    st.error(
+                    f"❌ Haar Cascade file not found:\n{cascade_path}"
                     )
-
-                    if face_cascade.empty():
-
-                        st.error(
-                            "❌ Face detection model could not be loaded."
-                        )
-
                     else:
-
-                        faces = face_cascade.detectMultiScale(
-                            gray,
-                            scaleFactor=1.1,
-                            minNeighbors=5,
-                            minSize=(30, 30)
+                        face_cascade = cv2.CascadeClassifier(
+                            cascade_path
                         )
+
+                        if face_cascade.empty():
+                            st.error(
+                                "❌ OpenCV could not load the Haar Cascade model."
+                            )
+                    else:
+                st.success(
+                    "✅ Face detection model loaded successfully."
+                )
+
+                except Exception as e:
+                st.error(
+                f"❌ Face detector initialization failed: {e}"
+                )
+                face_cascade = None
+                   
+                        if face_cascade is not None and not face_cascade.empty():
+                            faces = face_cascade.detectMultiScale(
+                                gray,
+                                scaleFactor=1.1,
+                                minNeighbors=5,
+                                minSize=(30, 30)
+                            )
+                        else:
+                            faces=()
 
                         for (x, y, w, h) in faces:
 
