@@ -795,10 +795,8 @@ st.write("### 📋 Investigation Tools")
 option = st.selectbox(
     "Select a tool",
     [
-        "Face Detection",
         "Criminal Database",
         "Case Search",
-        "Evidence Analysis"
     ],
     key="investigation_tool"
 )
