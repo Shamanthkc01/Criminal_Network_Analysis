@@ -1379,10 +1379,10 @@ elif option == "Evidence Analysis":
                             st.error(
                                 "❌ OpenCV could not load the Haar Cascade model."
                             )
-                    else:
-                st.success(
-                    "✅ Face detection model loaded successfully."
-                )
+                        else:
+                        st.success(
+                        " ✅ Face detection model loaded successfully."
+                        )
 
                 except Exception as e:
                 st.error(
