@@ -1233,10 +1233,10 @@ analysis_file = st.file_uploader(
     type=["jpg", "jpeg", "png"],
     key="case_analysis_image"
 )
-    if analysis_file is not None and case_id:
-        file_bytes = np.asarray(
-        bytearray(analysis_file.read()),
-        dtype=np.uint8
+if analysis_file is not None and case_id:
+    file_bytes = np.asarray(
+    bytearray(analysis_file.read()),
+    dtype=np.uint8
     )
 
     image = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
