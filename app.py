@@ -1233,7 +1233,6 @@ analysis_file = st.file_uploader(
     type=["jpg", "jpeg", "png"],
     key="case_analysis_image"
 )
-
 if analysis_file is not None and case_id:
 
     file_bytes = np.asarray(
@@ -1242,12 +1241,23 @@ if analysis_file is not None and case_id:
     )
 
     image = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
+
+    if image is None:
+        st.error("❌ Unable to read the uploaded image.")
+        st.stop()
+
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-    face_cascade = cv2.CascadeClassifier(
-        cv2.data.haarcascades +
+    cascade_path = os.path.join(
+        cv2.data.haarcascades,
         "haarcascade_frontalface_default.xml"
     )
+
+    face_cascade = cv2.CascadeClassifier(cascade_path)
+
+    if face_cascade.empty():
+        st.error("❌ Face detection model could not be loaded.")
+        st.stop()
 
     faces = face_cascade.detectMultiScale(
         gray,
@@ -1263,10 +1273,13 @@ if analysis_file is not None and case_id:
             (255, 0, 0),
             2
         )
+
     result = {
-    "image": image_path,
-    "faces_detected": len(faces)
-}
+        "case_id": case_id,
+        "faces_detected": len(faces)
+    }
+
+    st.success(f"✅ Faces detected: {len(faces)}")
 
     st.session_state.ai_results[case_id] = result
     with open(AI_FILE, "w", encoding="utf-8") as f:
