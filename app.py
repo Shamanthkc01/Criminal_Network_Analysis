@@ -1344,12 +1344,12 @@ report_text += """
     All findings must be reviewed by a qualified investigator.
     """
 
-    st.download_button(
-    label="📤 Download Case Report",
-    data=report_text,
-    file_name=f"{report_case_id}_report.txt",
-    mime="text/plain"
-    )
+st.download_button(
+label="📤 Download Case Report",
+data=report_text,
+file_name=f"{report_case_id}_report.txt",
+mime="text/plain"
+)
 
 # Step 28: Live Dashboard Statistics
 
