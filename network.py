@@ -50,7 +50,7 @@ def calculate_priority(graph):
                 location += 1
 
                 # Explainable priority indicator
-                score = (total_connections * 5+communication *+financial * 4+location * 2)
+                score = (total_connections * 5+communication *3+financial * 4+location * 2)
 
                 results.append({
                     "Entity": entity, 
