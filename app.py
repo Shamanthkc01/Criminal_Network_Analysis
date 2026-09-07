@@ -1146,27 +1146,45 @@ if "evidence" not in st.session_state:
 
 # Step 22: Link Evidence to Case
 
+# ============================================================
+# 📁 CASE EVIDENCE
+# ============================================================
+
 st.subheader("📁 Case Evidence")
 
 EVIDENCE_FILE = "evidence.json"
 EVIDENCE_FOLDER = "case_evidence"
 
+# Create evidence folder
 os.makedirs(EVIDENCE_FOLDER, exist_ok=True)
 
+# Load saved evidence
 if "evidence" not in st.session_state:
     if os.path.exists(EVIDENCE_FILE):
-        with open(EVIDENCE_FILE, "r", encoding="utf-8") as f:
-            st.session_state.evidence = json.load(f)
+        try:
+            with open(EVIDENCE_FILE, "r", encoding="utf-8") as f:
+                st.session_state.evidence = json.load(f)
+        except Exception:
+            st.session_state.evidence = {}
     else:
         st.session_state.evidence = {}
 
-selected_case = st.text_input("Enter Case ID")
 
-uploaded_file = st.file_uploader(
-    "Upload evidence image",
-    type=["jpg", "jpeg", "png"]
+# Enter Case ID
+selected_case = st.text_input(
+    "Enter Case ID",
+    key="evidence_case_id"
 )
 
+# Upload evidence
+uploaded_file = st.file_uploader(
+    "Upload evidence image",
+    type=["jpg", "jpeg", "png"],
+    key="evidence_upload"
+)
+
+
+# Save Evidence
 if uploaded_file is not None and selected_case:
 
     safe_name = os.path.basename(uploaded_file.name)
@@ -1176,21 +1194,19 @@ if uploaded_file is not None and selected_case:
         f"{selected_case}_{safe_name}"
     )
 
+    # Save image
     with open(image_path, "wb") as f:
         f.write(uploaded_file.getbuffer())
-    file_bytes = np.asarray(
-        bytearray(uploaded_file.getvalue()),
-        dtype = np.uint8
 
-    )
-
+    # Create case entry if it doesn't exist
     if selected_case not in st.session_state.evidence:
         st.session_state.evidence[selected_case] = []
 
-    st.session_state.evidence[selected_case].append(
-        image_path
-    )
+    # Avoid duplicate evidence paths
+    if image_path not in st.session_state.evidence[selected_case]:
+        st.session_state.evidence[selected_case].append(image_path)
 
+    # Save evidence information
     with open(EVIDENCE_FILE, "w", encoding="utf-8") as f:
         json.dump(
             st.session_state.evidence,
@@ -1204,134 +1220,276 @@ if uploaded_file is not None and selected_case:
     )
 
 elif uploaded_file is not None:
-    st.warning("⚠️ Enter a Case ID first.")        
-st.divider()
-# Step 23: AI Evidence Analysis
-AI_FILE = "ai_results.json"
+    st.warning("⚠️ Enter a Case ID first.")
 
-if "ai_results" not in st.session_state:
-    if os.path.exists(AI_FILE):
-        with open(AI_FILE, "r", encoding="utf-8") as f:
-            st.session_state.ai_results = json.load(f)
+
+# Show saved evidence for selected case
+if selected_case:
+
+    case_evidence = st.session_state.evidence.get(
+        selected_case,
+        []
+    )
+
+    if case_evidence:
+
+        st.write("### 📂 Saved Evidence")
+
+        for evidence_path in case_evidence:
+
+            st.write(
+                f"📄 {os.path.basename(evidence_path)}"
+            )
+
+            # Display image if it still exists
+            if os.path.exists(evidence_path):
+                st.image(
+                    evidence_path,
+                    width=300
+                )
+
     else:
-        st.session_state.ai_results = {}
+        st.info(
+            f"No evidence saved for Case {selected_case}."
+        )
 
-AI_IMAGE_FOLDER = "ai_analysis_images"
-if not os.path.exists(AI_IMAGE_FOLDER):
-    os.makedirs(AI_IMAGE_FOLDER)
 
+st.divider()
+
+
+# ============================================================
+# 🤖 AI EVIDENCE ANALYSIS
+# ============================================================
 
 st.subheader("🤖 AI Analysis & Case Record")
 
+AI_FILE = "ai_results.json"
+AI_IMAGE_FOLDER = "ai_analysis_images"
+
+# Create AI image folder
+os.makedirs(AI_IMAGE_FOLDER, exist_ok=True)
+
+
+# Load saved AI results
+if "ai_results" not in st.session_state:
+
+    if os.path.exists(AI_FILE):
+
+        try:
+            with open(AI_FILE, "r", encoding="utf-8") as f:
+                st.session_state.ai_results = json.load(f)
+
+        except Exception:
+            st.session_state.ai_results = {}
+
+    else:
+        st.session_state.ai_results = {}
+
+
+# Enter Case ID
 case_id = st.text_input(
     "Enter Case ID for this analysis",
     key="analysis_case"
 )
 
+
+# Upload image for AI analysis
 analysis_file = st.file_uploader(
     "Upload image for analysis",
     type=["jpg", "jpeg", "png"],
     key="case_analysis_image"
 )
+
+
+# ============================================================
+# RUN AI FACE DETECTION
+# ============================================================
+
 if analysis_file is not None and case_id:
 
+    # Read uploaded image
     file_bytes = np.asarray(
         bytearray(analysis_file.read()),
         dtype=np.uint8
     )
 
-    image = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
+    # Decode image
+    image = cv2.imdecode(
+        file_bytes,
+        cv2.IMREAD_COLOR
+    )
 
+    # Check image
     if image is None:
-        st.error("❌ Unable to read the uploaded image.")
+        st.error(
+            "❌ Unable to read the uploaded image."
+        )
         st.stop()
 
-    # Convert image to grayscale
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+    # Convert to grayscale
+    gray = cv2.cvtColor(
+        image,
+        cv2.COLOR_BGR2GRAY
+    )
+
 
     # Load Haar Cascade
     cascade_path = os.path.join(
         cv2.data.haarcascades,
         "haarcascade_frontalface_default.xml"
+    )
+
+    face_cascade = cv2.CascadeClassifier(
+        cascade_path
+    )
+
+
+    # Check model
+    if face_cascade.empty():
+
+        st.error(
+            "❌ Face detection model could not be loaded."
         )
 
-    face_cascade = cv2.CascadeClassifier(cascade_path)
-
-    if face_cascade.empty():
-        st.error("❌ Face detection model could not be loaded.")
         st.stop()
+
 
     # Detect faces
     faces = face_cascade.detectMultiScale(
-            gray,
-            scaleFactor=1.1,
-            minNeighbors=5
-        )
-
-    # Draw rectangles around detected faces
-    for (x, y, w, h) in faces:
-        cv2.rectangle(
-                image,
-                (x, y),
-                (x + w, y + h),
-                (255, 0, 0),
-                2
-            )
-
-    # Create result
-    result = {
-        "case_id": case_id,
-        "faces_detected": len(faces)
-        }
-
-    # Show result immediately
-    st.success("✅ Face Detection Complete")
-    st.write(f"👤 Faces Detected: {len(faces)}")
-
-    # Display analyzed image
-    st.image(
-        cv2.cvtColor(image, cv2.COLOR_BGR2RGB),
-            caption="Analyzed Image",
-            use_container_width=True
+        gray,
+        scaleFactor=1.1,
+        minNeighbors=5,
+        minSize=(30, 30)
     )
 
-    # Save result
+
+    # Draw rectangle around detected faces
+    for (x, y, w, h) in faces:
+
+        cv2.rectangle(
+            image,
+            (x, y),
+            (x + w, y + h),
+            (255, 0, 0),
+            2
+        )
+
+
+    # Number of faces
+    faces_detected = len(faces)
+
+
+    # ========================================================
+    # DISPLAY RESULT
+    # ========================================================
+
+    st.success(
+        f"✅ Face Detection Complete"
+    )
+
+    st.write(
+        f"👤 Faces Detected: **{faces_detected}**"
+    )
+
+
+    # Convert BGR → RGB for Streamlit
+    display_image = cv2.cvtColor(
+        image,
+        cv2.COLOR_BGR2RGB
+    )
+
+
+    # Show analysed image
+    st.image(
+        display_image,
+        caption=f"AI Analysis - Case {case_id}",
+        width=500
+    )
+
+
+    # ========================================================
+    # SAVE AI RESULT
+    # ========================================================
+
+    result = {
+        "case_id": case_id,
+        "faces_detected": faces_detected
+    }
+
+
+    # Save result in session state
     st.session_state.ai_results[case_id] = result
 
+
+    # Save result permanently
     with open(AI_FILE, "w", encoding="utf-8") as f:
+
         json.dump(
-                st.session_state.ai_results,
-                f,
-                indent=4,
-                ensure_ascii=False
-            )
+            st.session_state.ai_results,
+            f,
+            indent=4,
+            ensure_ascii=False
+        )
+
 
     st.success(
         f"✅ AI analysis saved to Case {case_id}"
-        )
+    )
+
 
     st.warning(
-        "⚠️ This result is only a computer-vision observation.\n"
+        "⚠️ This result is only a computer-vision observation. "
         "It does not establish identity or criminal responsibility."
-        )
+    )
+
 
 elif analysis_file is not None:
-    st.warning("⚠️ Enter a Case ID first.")
+
+    st.warning(
+        "⚠️ Enter a Case ID first."
+    )
+
+
+st.divider()
+
+
+# ============================================================
+# 📊 SAVED AI RESULTS
+# ============================================================
+
 st.subheader("📊 Saved AI Results")
+
 
 if st.session_state.ai_results:
 
     for saved_case_id, result in st.session_state.ai_results.items():
-        st.write(f"### 📁 Case {saved_case_id}")
+
+        st.divider()
 
         st.write(
-            f"👤 Faces Detected: "
-            f"**{result.get('faces_detected', 0)}**"
+            f"### 📁 Case {saved_case_id}"
+        )
+
+        faces_count = result.get(
+            "faces_detected",
+            0
+        )
+
+        st.write(
+            f"👤 Faces Detected: **{faces_count}**"
+        )
+
+        st.info(
+            "This is an AI/computer-vision observation "
+            "and does not establish identity or guilt."
         )
 
 else:
-    st.info("No AI analysis results saved yet.")
 
+    st.info(
+        "No AI analysis results saved yet."
+    )
 st.subheader("📄 Generate Case Report")
 
 report_case_id = st.text_input(
