@@ -1273,12 +1273,12 @@ if analysis_file is not None and case_id:
                 2
             )
 
-    result = {
-        "case_id": case_id,
-        "faces_detected": len(faces)
-    }
+        result = {
+            "case_id": case_id,
+            "faces_detected": len(faces)
+        }
 
-    st.success(f"✅ Faces detected: {len(faces)}")
+        st.success(f"✅ Faces detected: {len(faces)}")
 
     st.session_state.ai_results[case_id] = result
     with open(AI_FILE, "w", encoding="utf-8") as f:
