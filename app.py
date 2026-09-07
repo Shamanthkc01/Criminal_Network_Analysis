@@ -893,7 +893,7 @@ def get_case_id(case):
 # 🗄️ CRIMINAL DATABASE
 # ============================================================
 
-    elif option == "Criminal Database":
+if option == "Criminal Database":
     st.write("### 🗄️ Criminal Database")
 
     st.info(
@@ -992,7 +992,7 @@ def get_case_id(case):
 # 🔎 CASE SEARCH
 # ============================================================
 
-    elif option == "Case Search":
+elif option == "Case Search":
 
     st.write("### 🔎 Case Search")
 
