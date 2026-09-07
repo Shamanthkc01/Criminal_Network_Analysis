@@ -1337,8 +1337,7 @@ Description:
     Evidence Image: {result["image"]}
     Faces Detected: {result["faces_detected"]}
     """
-
-    report_text += """
+report_text += """
 
     NOTE:
     AI observations are not proof of identity or criminal responsibil
