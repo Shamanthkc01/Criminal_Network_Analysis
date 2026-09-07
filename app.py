@@ -567,11 +567,12 @@ if st.session_state.role in [
     "Investigator"
 ]:
 
-    st.subheader(" Investigation Priority Analysis")
+    priority_data = calculate_priority(unified_graph)
 
-    priority_data = calculate_priority( unified_graph)
-
-    priority_data = priority_data.sort_values( "Priority Score",ascending=False)
+    priority_data = priority_data.sort_values(
+        "Priority Score",
+        ascending=False
+        ).reset_index(drop=True)
 
     st.write(
         "Entities are ranked using explainable network "
