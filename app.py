@@ -1390,17 +1390,17 @@ elif option == "Evidence Analysis":
                     )
                     face_cascade = None
                    
-                        if face_cascade is not None and not face_cascade.empty():
-                            faces = face_cascade.detectMultiScale(
+                    if face_cascade is not None and not face_cascade.empty():
+                        faces = face_cascade.detectMultiScale(
                                 gray,
                                 scaleFactor=1.1,
                                 minNeighbors=5,
                                 minSize=(30, 30)
                             )
-                        else:
-                            faces=()
+                    else:
+                        faces=()
 
-                        for (x, y, w, h) in faces:
+                    for (x, y, w, h) in faces:
 
                             cv2.rectangle(
                                 evidence_image,
@@ -1410,17 +1410,17 @@ elif option == "Evidence Analysis":
                                 2
                             )
 
-                        display_evidence = cv2.cvtColor(
+                    display_evidence = cv2.cvtColor(
                             evidence_image,
                             cv2.COLOR_BGR2RGB
                         )
 
-                        st.success(
+                    st.success(
                             f"✅ Evidence Analysis Complete — "
                             f"{len(faces)} face(s) detected."
                         )
 
-                        st.image(
+                    st.image(
                             display_evidence,
                             caption=(
                                 f"Evidence Analysis - "
@@ -1429,7 +1429,7 @@ elif option == "Evidence Analysis":
                             width=500
                         )
 
-                        st.warning(
+                    st.warning(
                             "⚠️ This analysis detects visible face "
                             "regions only. It does not establish identity."
                         )
