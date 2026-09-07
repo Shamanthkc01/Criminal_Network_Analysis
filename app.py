@@ -938,9 +938,7 @@ if option == "Face Detection":
                 "haarcascade_frontalface_default.xml"
             )
 
-            face_cascade = cv2.CascadeClassifier(
-                cascade_path
-            )
+            face_cascade = cv2.CascadeClassifier(cascade_path)
 
             if face_cascade.empty():
 
