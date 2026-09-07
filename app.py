@@ -1264,14 +1264,14 @@ if analysis_file is not None and case_id:
         minNeighbors=5
     )
 
-    for (x, y, w, h) in faces:
-        cv2.rectangle(
-            image,
-            (x, y),
-            (x + w, y + h),
-            (255, 0, 0),
-            2
-        )
+        for (x, y, w, h) in faces:
+            cv2.rectangle(
+                image,
+                (x, y),
+                (x + w, y + h),
+                (255, 0, 0),
+                2
+            )
 
     result = {
         "case_id": case_id,
